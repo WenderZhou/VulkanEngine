@@ -99,7 +99,7 @@
     </Link>
     <CustomBuildStep>
       <Command>
-</Command>
+      </Command>
       <Outputs>%(Outputs)</Outputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
@@ -124,7 +124,7 @@
     </Link>
     <CustomBuildStep>
       <Command>
-</Command>
+      </Command>
       <Outputs>%(Outputs)</Outputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
@@ -145,7 +145,7 @@
     </Link>
     <CustomBuildStep>
       <Command>
-</Command>
+      </Command>
       <Outputs>%(Outputs)</Outputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
@@ -170,7 +170,7 @@
     </Link>
     <CustomBuildStep>
       <Command>
-</Command>
+      </Command>
       <Outputs>%(Outputs)</Outputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
@@ -189,9 +189,19 @@
     <ClInclude Include="swapchain.h" />
     <ClInclude Include="window.h" />
   </ItemGroup>
+	<ItemGroup>
+    <CustomBuild Include="shaders\*.frag">
+      <Command>C:\VulkanSDK\1.3.268.0\Bin\glslc.exe %(FullPath) -o %(FullPath).spv</Command>
+      <Outputs>%(FullPath).spv</Outputs>
+      <Message>Compiling shader: %(FullPath)</Message>
+    </CustomBuild>
+  </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\basic.frag" />
-    <None Include="shaders\basic.vert" />
+    <CustomBuild Include="shaders\*.vert">
+      <Command>C:\VulkanSDK\1.3.268.0\Bin\glslc.exe %(FullPath) -o %(FullPath).spv</Command>
+      <Outputs>%(FullPath).spv</Outputs>
+      <Message>Compiling shader: %(FullPath)</Message>
+    </CustomBuild>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

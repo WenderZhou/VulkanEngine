@@ -13,7 +13,7 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="shaders">
+    <Filter Include="Shaders">
       <UniqueIdentifier>{5690e51f-0cf4-427a-8b69-cc9266e0f630}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -55,11 +55,11 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\basic.vert">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\basic.frag">
-      <Filter>shaders</Filter>
-    </None>
+    <CustomBuild Include="shaders\*.vert">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shaders\*.frag">
+      <Filter>Shaders</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>
