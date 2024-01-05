@@ -12,16 +12,24 @@ Window::Window(int w, int h, std::string name) :width(w), height(h), windowName(
 
 Window::~Window()
 {
-	glfwDestroyWindow(window);
+	glfwDestroyWindow(glfwWindow);
 	glfwTerminate();
 }
 
 void Window::createWindowSurface(VkInstance instance, VkSurfaceKHR* surface)
 {
-	if (glfwCreateWindowSurface(instance, window, nullptr, surface) != VK_SUCCESS)
+	if (glfwCreateWindowSurface(instance, glfwWindow, nullptr, surface) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to create window surface");
 	}
+}
+
+void Window::framebufferResizeCallback(GLFWwindow* glfwWindow, int width, int height)
+{
+	Window* window = reinterpret_cast<Window*>(glfwGetWindowUserPointer(glfwWindow));
+	window->framebufferResized = true;
+	window->width = width;
+	window->height = height;
 }
 
 void Window::initWindow()
@@ -29,9 +37,11 @@ void Window::initWindow()
 	glfwInit();
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);	// not generate OpenGL context
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-	window = glfwCreateWindow(width, height, windowName.c_str(), nullptr, nullptr);
+	glfwWindow = glfwCreateWindow(width, height, windowName.c_str(), nullptr, nullptr);
+	glfwSetWindowUserPointer(glfwWindow, this);
+	glfwSetFramebufferSizeCallback(glfwWindow, framebufferResizeCallback);
 }
 
 }

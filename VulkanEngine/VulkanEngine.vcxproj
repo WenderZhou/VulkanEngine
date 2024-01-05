@@ -186,6 +186,7 @@
   <ItemGroup>
     <ClInclude Include="application.h" />
     <ClInclude Include="device.h" />
+    <ClInclude Include="gameobject.h" />
     <ClInclude Include="model.h" />
     <ClInclude Include="pipeline.h" />
     <ClInclude Include="swapchain.h" />

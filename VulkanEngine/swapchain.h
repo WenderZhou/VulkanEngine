@@ -6,6 +6,7 @@
 #include <vulkan/vulkan.h>
 
 // std lib headers
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -16,10 +17,11 @@ public:
 	static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
 	Swapchain(Device& deviceRef, VkExtent2D windowExtent);
+	Swapchain(Device& deviceRef, VkExtent2D windowExtent, std::shared_ptr<Swapchain> previous);
 	~Swapchain();
 
 	Swapchain(const Swapchain&) = delete;
-	void operator=(const Swapchain&) = delete;
+	Swapchain& operator=(const Swapchain&) = delete;
 
 	VkFramebuffer getFrameBuffer(int index) { return swapChainFramebuffers[index]; }
 	VkRenderPass getRenderPass() { return renderPass; }
@@ -39,6 +41,7 @@ public:
 	VkResult submitCommandBuffers(const VkCommandBuffer* buffers, uint32_t* imageIndex);
 
 private:
+	void init();
 	void createSwapChain();
 	void createImageViews();
 	void createDepthResources();
@@ -69,6 +72,7 @@ private:
 	VkExtent2D windowExtent;
 
 	VkSwapchainKHR swapChain;
+	std::shared_ptr<Swapchain> oldSwapchain;
 
 	std::vector<VkSemaphore> imageAvailableSemaphores;
 	std::vector<VkSemaphore> renderFinishedSemaphores;
