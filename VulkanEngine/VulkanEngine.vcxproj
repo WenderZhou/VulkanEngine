@@ -180,6 +180,8 @@
     <ClCompile Include="application.cpp" />
     <ClCompile Include="model.cpp" />
     <ClCompile Include="pipeline.cpp" />
+    <ClCompile Include="renderer.cpp" />
+    <ClCompile Include="renderSystem.cpp" />
     <ClCompile Include="swapchain.cpp" />
     <ClCompile Include="window.cpp" />
   </ItemGroup>
@@ -189,6 +191,8 @@
     <ClInclude Include="gameobject.h" />
     <ClInclude Include="model.h" />
     <ClInclude Include="pipeline.h" />
+    <ClInclude Include="renderer.h" />
+    <ClInclude Include="renderSystem.h" />
     <ClInclude Include="swapchain.h" />
     <ClInclude Include="window.h" />
   </ItemGroup>
