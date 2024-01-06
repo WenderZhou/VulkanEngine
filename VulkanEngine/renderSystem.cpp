@@ -67,9 +67,6 @@ void RenderSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::vector<
 
 	for (auto& obj : gameObjects)
 	{
-		obj.transform.rotation.y = glm::mod(obj.transform.rotation.y + 0.0005f, glm::two_pi<float>());
-		obj.transform.rotation.x = glm::mod(obj.transform.rotation.x + 0.0005f, glm::two_pi<float>());
-
 		SimplePushConstantData push{};
 		push.color = obj.color;
 		push.transform = projectionView * obj.transform.mat4();

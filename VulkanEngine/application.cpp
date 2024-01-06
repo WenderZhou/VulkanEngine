@@ -1,5 +1,6 @@
 #include "application.h"
 
+#include "keyboard.h"
 #include "camera.h"
 #include "renderSystem.h"
 
@@ -10,6 +11,7 @@
 
 #include <stdexcept>
 #include <array>
+#include <chrono>
 
 namespace VulkanEngine
 {
@@ -28,15 +30,25 @@ void App::run()
 {
 	RenderSystem renderSystem{ device, renderer.getSwapchainRenderPass() };
     Camera camera{};
-    //camera.setViewDirection(glm::vec3(0.0f), glm::vec3(0.5f, 0.0f, 1.0f));
-    camera.setViewTarget(glm::vec3(-1.0f, -2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 2.5f));
+
+    // for store the camera state
+    auto viewObject = GameObject::createGameObject();
+    KeyboardMovementController cameraController{};
+
+    auto lastTime = std::chrono::high_resolution_clock::now();
 
 	while (!window.shouldClose())
 	{
 		glfwPollEvents();
 		
+        auto currTime = std::chrono::high_resolution_clock::now();
+        float deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(currTime - lastTime).count();
+        lastTime = currTime;
+
+        cameraController.moveInPlaneXZ(window.getGLFWWindow(), deltaTime, viewObject);
+        camera.setViewYXZ(viewObject.transform.translation, viewObject.transform.rotation);
+
         float aspectRatio = renderer.getAspectRatio();
-        //camera.setOrthographicProjection(-aspectRatio, aspectRatio, -1, 1, -1, 1);
         camera.setPerspectiveProjection(glm::radians(50.0f), aspectRatio, 0.1f, 100.f);
 
 		if (VkCommandBuffer commandBuffer = renderer.beginFrame())
