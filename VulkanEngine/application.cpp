@@ -1,5 +1,6 @@
 #include "application.h"
 
+#include "camera.h"
 #include "renderSystem.h"
 
 #define GLM_FORCE_RADIANS
@@ -26,15 +27,22 @@ App::~App()
 void App::run()
 {
 	RenderSystem renderSystem{ device, renderer.getSwapchainRenderPass() };
+    Camera camera{};
+    //camera.setViewDirection(glm::vec3(0.0f), glm::vec3(0.5f, 0.0f, 1.0f));
+    camera.setViewTarget(glm::vec3(-1.0f, -2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 2.5f));
 
 	while (!window.shouldClose())
 	{
 		glfwPollEvents();
 		
+        float aspectRatio = renderer.getAspectRatio();
+        //camera.setOrthographicProjection(-aspectRatio, aspectRatio, -1, 1, -1, 1);
+        camera.setPerspectiveProjection(glm::radians(50.0f), aspectRatio, 0.1f, 100.f);
+
 		if (VkCommandBuffer commandBuffer = renderer.beginFrame())
 		{
 			renderer.beginSwapchainRenderPass(commandBuffer);
-			renderSystem.renderGameObjects(commandBuffer, gameObjects);
+			renderSystem.renderGameObjects(commandBuffer, gameObjects, camera);
 			renderer.endSwapchainRenderPass(commandBuffer);
 			renderer.endFrame();
 		}
@@ -107,7 +115,7 @@ void App::loadGameObjects()
 
 	GameObject cube = GameObject::createGameObject();
     cube.model = model;
-    cube.transform.translation = { 0.0f, 0.0f, 0.5f };
+    cube.transform.translation = { 0.0f, 0.0f, 2.5f };
     cube.transform.scale = { 0.5f, 0.5f, 0.5f };
 
 	gameObjects.push_back(std::move(cube));
