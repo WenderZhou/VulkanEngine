@@ -69,8 +69,8 @@ void App::loadGameObjects()
 
 	GameObject gameObject = GameObject::createGameObject();
 	gameObject.model = model;
-	gameObject.transform.translation = { 0.0f, 0.0f, 2.5f };
-	gameObject.transform.scale = { 3.0f, 3.0f, 3.0f };
+	gameObject.transform.translation = { 0.0f, 0.5f, 2.5f };
+	gameObject.transform.scale = { 3.0f, 1.5f, 3.0f };
 
 	gameObjects.push_back(std::move(gameObject));
 }
