@@ -175,34 +175,6 @@
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="camera.cpp" />
-    <ClCompile Include="device.cpp" />
-    <ClCompile Include="gameobject.cpp" />
-    <ClCompile Include="keyboard.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="application.cpp" />
-    <ClCompile Include="model.cpp" />
-    <ClCompile Include="pipeline.cpp" />
-    <ClCompile Include="renderer.cpp" />
-    <ClCompile Include="renderSystem.cpp" />
-    <ClCompile Include="swapchain.cpp" />
-    <ClCompile Include="window.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="application.h" />
-    <ClInclude Include="camera.h" />
-    <ClInclude Include="device.h" />
-    <ClInclude Include="gameobject.h" />
-    <ClInclude Include="keyboard.h" />
-    <ClInclude Include="model.h" />
-    <ClInclude Include="pipeline.h" />
-    <ClInclude Include="renderer.h" />
-    <ClInclude Include="renderSystem.h" />
-    <ClInclude Include="swapchain.h" />
-    <ClInclude Include="utils.h" />
-    <ClInclude Include="window.h" />
-  </ItemGroup>
-  <ItemGroup>
     <CustomBuild Include="shaders\*.frag">
       <Command>C:\VulkanSDK\1.3.268.0\Bin\glslc.exe %(FullPath) -o %(FullPath).spv</Command>
       <Outputs>%(FullPath).spv</Outputs>
@@ -215,6 +187,34 @@
       <Outputs>%(FullPath).spv</Outputs>
       <Message>Compiling shader: %(FullPath)</Message>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\application.cpp" />
+    <ClCompile Include="src\camera.cpp" />
+    <ClCompile Include="src\device.cpp" />
+    <ClCompile Include="src\gameobject.cpp" />
+    <ClCompile Include="src\keyboard.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\model.cpp" />
+    <ClCompile Include="src\pipeline.cpp" />
+    <ClCompile Include="src\renderer.cpp" />
+    <ClCompile Include="src\renderSystem.cpp" />
+    <ClCompile Include="src\swapchain.cpp" />
+    <ClCompile Include="src\window.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\application.h" />
+    <ClInclude Include="src\camera.h" />
+    <ClInclude Include="src\device.h" />
+    <ClInclude Include="src\gameobject.h" />
+    <ClInclude Include="src\keyboard.h" />
+    <ClInclude Include="src\model.h" />
+    <ClInclude Include="src\pipeline.h" />
+    <ClInclude Include="src\renderer.h" />
+    <ClInclude Include="src\renderSystem.h" />
+    <ClInclude Include="src\swapchain.h" />
+    <ClInclude Include="src\utils.h" />
+    <ClInclude Include="src\window.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
