@@ -4,6 +4,7 @@
 #include "pipeline.h"
 #include "device.h"
 #include "gameobject.h"
+#include "frameInfo.h"
 
 #include <memory>
 #include <vector>
@@ -20,7 +21,7 @@ namespace VulkanEngine
 		RenderSystem(const RenderSystem&) = delete;
 		RenderSystem& operator=(const RenderSystem&) = delete;
 
-		void renderGameObjects(VkCommandBuffer commandBuffer, std::vector<GameObject>& gameObjects, const Camera& camera);
+		void renderGameObjects(FrameInfo& frameInfo, std::vector<GameObject>& gameObjects);
 
 	private:
 		void createPipelineLayout();

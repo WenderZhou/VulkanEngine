@@ -3,6 +3,7 @@
 #include "keyboard.h"
 #include "camera.h"
 #include "renderSystem.h"
+#include "buffer.h"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -16,6 +17,12 @@
 namespace VulkanEngine
 {
 
+struct GlobalUbo
+{
+	glm::mat4 projectionView{ 1.0f };
+	glm::vec3 lightDirection = glm::normalize(glm::vec3{ 1.0f, -3.0f, -1.0f });
+};
+
 App::App()
 {
 	loadGameObjects();
@@ -28,6 +35,18 @@ App::~App()
 
 void App::run()
 {
+	std::vector<std::unique_ptr<Buffer>> uboBuffers(Swapchain::MAX_FRAMES_IN_FLIGHT);
+	for (int i = 0; i < uboBuffers.size(); i++)
+	{
+		uboBuffers[i] = std::make_unique<Buffer>(
+			device,
+			sizeof(GlobalUbo),
+			1,
+			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+		uboBuffers[i]->map();
+	}
+
 	RenderSystem renderSystem{ device, renderer.getSwapchainRenderPass() };
     Camera camera{};
 
@@ -42,10 +61,10 @@ void App::run()
 		glfwPollEvents();
 		
         auto currTime = std::chrono::high_resolution_clock::now();
-        float deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(currTime - lastTime).count();
+        float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(currTime - lastTime).count();
         lastTime = currTime;
 
-        cameraController.moveInPlaneXZ(window.getGLFWWindow(), deltaTime, viewObject);
+        cameraController.moveInPlaneXZ(window.getGLFWWindow(), frameTime, viewObject);
         camera.setViewYXZ(viewObject.transform.translation, viewObject.transform.rotation);
 
         float aspectRatio = renderer.getAspectRatio();
@@ -53,8 +72,17 @@ void App::run()
 
 		if (VkCommandBuffer commandBuffer = renderer.beginFrame())
 		{
+			int frameIndex = renderer.getFrameIndex();
+
+			FrameInfo frameInfo{ frameIndex, frameTime, commandBuffer, camera };
+
+			GlobalUbo ubo{};
+			ubo.projectionView = camera.getProjection() * camera.getView();
+			uboBuffers[frameIndex]->writeToBuffer(&ubo);
+			uboBuffers[frameIndex]->flush();
+
 			renderer.beginSwapchainRenderPass(commandBuffer);
-			renderSystem.renderGameObjects(commandBuffer, gameObjects, camera);
+			renderSystem.renderGameObjects(frameInfo, gameObjects);
 			renderer.endSwapchainRenderPass(commandBuffer);
 			renderer.endFrame();
 		}

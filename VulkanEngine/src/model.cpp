@@ -126,14 +126,7 @@ Model::Model(Device& device, const Mesh& mesh) :device(device)
 
 Model::~Model()
 {
-	vkDestroyBuffer(device.device(), vertexBuffer, nullptr);
-	vkFreeMemory(device.device(), vertexBufferMemory, nullptr);
 
-	if (hasIndexBuffer)
-	{
-		vkDestroyBuffer(device.device(), indexBuffer, nullptr);
-		vkFreeMemory(device.device(), indexBufferMemory, nullptr);
-	}
 }
 
 void Model::createVertexBuffers(const std::vector<Vertex>& vertices)
@@ -142,21 +135,14 @@ void Model::createVertexBuffers(const std::vector<Vertex>& vertices)
 	assert(vertexCount >= 3 && "Vertex count must be at least 3");
 	VkDeviceSize bufferSize = sizeof(Vertex) * vertexCount;
 
-	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
-	device.createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+	Buffer stagingBuffer{ device, sizeof(Vertex), vertexCount, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT };
 
-	void* data;
-	vkMapMemory(device.device(), stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, vertices.data(), static_cast<size_t>(bufferSize));
-	vkUnmapMemory(device.device(), stagingBufferMemory);
+	stagingBuffer.map();
+	stagingBuffer.writeToBuffer((void*)vertices.data());
 
-	device.createBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
+	vertexBuffer = std::make_unique<Buffer>(device, sizeof(Vertex), vertexCount, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-	device.copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
-
-	vkDestroyBuffer(device.device(), stagingBuffer, nullptr);
-	vkFreeMemory(device.device(), stagingBufferMemory, nullptr);
+	device.copyBuffer(stagingBuffer.getBuffer(), vertexBuffer->getBuffer(), bufferSize);
 }
 
 void Model::createIndexBuffers(const std::vector<uint32_t>& indices)
@@ -172,21 +158,14 @@ void Model::createIndexBuffers(const std::vector<uint32_t>& indices)
 	assert(indexCount >= 3 && "Index count must be at least 3");
 	VkDeviceSize bufferSize = sizeof(uint32_t) * indexCount;
 
-	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
-	device.createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+	Buffer stagingBuffer{ device, sizeof(uint32_t), indexCount, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT };
 
-	void* data;
-	vkMapMemory(device.device(), stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, indices.data(), static_cast<size_t>(bufferSize));
-	vkUnmapMemory(device.device(), stagingBufferMemory);
+	stagingBuffer.map();
+	stagingBuffer.writeToBuffer((void*)indices.data());
 
-	device.createBuffer(bufferSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
+	indexBuffer = std::make_unique<Buffer>(device, sizeof(uint32_t), indexCount, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-	device.copyBuffer(stagingBuffer, indexBuffer, bufferSize);
-
-	vkDestroyBuffer(device.device(), stagingBuffer, nullptr);
-	vkFreeMemory(device.device(), stagingBufferMemory, nullptr);
+	device.copyBuffer(stagingBuffer.getBuffer(), indexBuffer->getBuffer(), bufferSize);
 }
 
 std::unique_ptr<Model> Model::createModelFromFile(Device& device, const std::string& filepath)
@@ -198,13 +177,13 @@ std::unique_ptr<Model> Model::createModelFromFile(Device& device, const std::str
 
 void Model::bind(VkCommandBuffer commandBuffer)
 {
-	VkBuffer buffers[] = { vertexBuffer };
+	VkBuffer buffers[] = { vertexBuffer->getBuffer() };
 	VkDeviceSize offsets[] = { 0 };
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
 
 	if (hasIndexBuffer)
 	{
-		vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+		vkCmdBindIndexBuffer(commandBuffer, indexBuffer->getBuffer(), 0, VK_INDEX_TYPE_UINT32);
 	}
 }
 
