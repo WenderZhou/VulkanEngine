@@ -4,6 +4,7 @@
 #include "device.h"
 #include "renderer.h"
 #include "gameobject.h"
+#include "descriptor.h"
 
 #include <memory>
 #include <vector>
@@ -32,6 +33,7 @@ private:
 	Device device{ window };
 	Renderer renderer{ window, device };
 
+	std::unique_ptr<DescriptorPool> globalPool{};
 	std::vector<GameObject> gameObjects;
 };
 

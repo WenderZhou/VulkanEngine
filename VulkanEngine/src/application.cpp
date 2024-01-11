@@ -25,6 +25,7 @@ struct GlobalUbo
 
 App::App()
 {
+	
 	loadGameObjects();
 }
 
