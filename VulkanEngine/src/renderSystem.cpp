@@ -61,7 +61,7 @@ void RenderSystem::createPipeline(VkRenderPass renderPass)
 	pipeline = std::make_unique<Pipeline>(device, "shaders/basic.vert.spv", "shaders/basic.frag.spv", pipelineConfigInfo);
 }
 
-void RenderSystem::renderGameObjects(FrameInfo& frameInfo, std::vector<GameObject>& gameObjects)
+void RenderSystem::renderGameObjects(FrameInfo& frameInfo)
 {
 	pipeline->bind(frameInfo.commandBuffer);
 
@@ -77,8 +77,13 @@ void RenderSystem::renderGameObjects(FrameInfo& frameInfo, std::vector<GameObjec
 		0,
 		nullptr);
 
-	for (auto& obj : gameObjects)
+	for (auto& kv : frameInfo.gameObjects)
 	{
+		auto& obj = kv.second;
+
+		if (obj.model == nullptr)
+			continue;
+
 		SimplePushConstantData push{};
 		push.modelMartix = obj.transform.mat4();
 		push.normalMatrix = obj.transform.normalMatrix();

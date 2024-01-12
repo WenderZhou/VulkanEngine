@@ -55,7 +55,7 @@ void App::run()
 	}
 
 	auto globalSetLayout = DescriptorSetLayout::Builder(device)
-		.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
+		.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
 		.build();
 
 	std::vector<VkDescriptorSet> globalDescriptorSets(Swapchain::MAX_FRAMES_IN_FLIGHT);
@@ -101,7 +101,8 @@ void App::run()
 				frameTime,
 				commandBuffer,
 				camera,
-				globalDescriptorSets[frameIndex]
+				globalDescriptorSets[frameIndex],
+				gameObjects
 			};
 
 			GlobalUbo ubo{};
@@ -110,7 +111,7 @@ void App::run()
 			uboBuffers[frameIndex]->flush();
 
 			renderer.beginSwapchainRenderPass(commandBuffer);
-			renderSystem.renderGameObjects(frameInfo, gameObjects);
+			renderSystem.renderGameObjects(frameInfo);
 			renderer.endSwapchainRenderPass(commandBuffer);
 			renderer.endFrame();
 		}
@@ -126,21 +127,21 @@ void App::loadGameObjects()
 	flatVase.model = model;
 	flatVase.transform.translation = { -0.5f, 0.5f, 0.0f };
 	flatVase.transform.scale = { 3.0f, 1.5f, 3.0f };
-	gameObjects.push_back(std::move(flatVase));
+	gameObjects.emplace(flatVase.getId(), std::move(flatVase));
 
 	model = Model::createModelFromFile(device, "models/smooth_vase.obj");
 	GameObject smoothVase = GameObject::createGameObject();
 	smoothVase.model = model;
 	smoothVase.transform.translation = { 0.5f, 0.5f, 0.0f };
 	smoothVase.transform.scale = { 3.0f, 1.5f, 3.0f };
-	gameObjects.push_back(std::move(smoothVase));
+	gameObjects.emplace(smoothVase.getId(), std::move(smoothVase));
 
 	model = Model::createModelFromFile(device, "models/quad.obj");
 	GameObject quad = GameObject::createGameObject();
 	quad.model = model;
 	quad.transform.translation = { 0.0f, 0.5f, 0.0f };
 	quad.transform.scale = { 3.0f, 1.0f, 3.0f };
-	gameObjects.push_back(std::move(quad));
+	gameObjects.emplace(quad.getId(), std::move(quad));
 }
 
 }
