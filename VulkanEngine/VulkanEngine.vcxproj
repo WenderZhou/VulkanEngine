@@ -192,6 +192,7 @@
     <ClCompile Include="src\application.cpp" />
     <ClCompile Include="src\buffer.cpp" />
     <ClCompile Include="src\camera.cpp" />
+    <ClCompile Include="src\descriptor.cpp" />
     <ClCompile Include="src\device.cpp" />
     <ClCompile Include="src\gameobject.cpp" />
     <ClCompile Include="src\keyboard.cpp" />
@@ -207,6 +208,7 @@
     <ClInclude Include="src\application.h" />
     <ClInclude Include="src\buffer.h" />
     <ClInclude Include="src\camera.h" />
+    <ClInclude Include="src\descriptor.h" />
     <ClInclude Include="src\device.h" />
     <ClInclude Include="src\frameInfo.h" />
     <ClInclude Include="src\gameobject.h" />

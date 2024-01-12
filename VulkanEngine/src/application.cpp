@@ -19,13 +19,17 @@ namespace VulkanEngine
 
 struct GlobalUbo
 {
-	glm::mat4 projectionView{ 1.0f };
-	glm::vec3 lightDirection = glm::normalize(glm::vec3{ 1.0f, -3.0f, -1.0f });
+	alignas(16) glm::mat4 projectionView{ 1.0f };
+	alignas(16) glm::vec3 lightDirection = glm::normalize(glm::vec3{ 1.0f, -3.0f, -1.0f });
 };
 
 App::App()
 {
-	
+	globalPool = 
+		DescriptorPool::Builder(device)
+		.setMaxSets(Swapchain::MAX_FRAMES_IN_FLIGHT)
+		.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Swapchain::MAX_FRAMES_IN_FLIGHT)
+		.build();
 	loadGameObjects();
 }
 
@@ -48,7 +52,20 @@ void App::run()
 		uboBuffers[i]->map();
 	}
 
-	RenderSystem renderSystem{ device, renderer.getSwapchainRenderPass() };
+	auto globalSetLayout = DescriptorSetLayout::Builder(device)
+		.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
+		.build();
+
+	std::vector<VkDescriptorSet> globalDescriptorSets(Swapchain::MAX_FRAMES_IN_FLIGHT);
+	for (int i = 0; i < globalDescriptorSets.size(); i++)
+	{
+		auto bufferInfo = uboBuffers[i]->descriptorInfo();
+		DescriptorWriter(*globalSetLayout, *globalPool)
+			.writeBuffer(0, &bufferInfo)
+			.build(globalDescriptorSets[i]);
+	}
+
+	RenderSystem renderSystem{ device, renderer.getSwapchainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
     Camera camera{};
 
     // for store the camera state
@@ -75,7 +92,14 @@ void App::run()
 		{
 			int frameIndex = renderer.getFrameIndex();
 
-			FrameInfo frameInfo{ frameIndex, frameTime, commandBuffer, camera };
+			FrameInfo frameInfo
+			{
+				frameIndex,
+				frameTime,
+				commandBuffer,
+				camera,
+				globalDescriptorSets[frameIndex]
+			};
 
 			GlobalUbo ubo{};
 			ubo.projectionView = camera.getProjection() * camera.getView();
