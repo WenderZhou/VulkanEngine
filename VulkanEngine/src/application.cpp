@@ -19,8 +19,10 @@ namespace VulkanEngine
 
 struct GlobalUbo
 {
-	alignas(16) glm::mat4 projectionView{ 1.0f };
-	alignas(16) glm::vec3 lightDirection = glm::normalize(glm::vec3{ 1.0f, -3.0f, -1.0f });
+	glm::mat4 projectionView{ 1.0f };
+	glm::vec4 ambientLightColor{ 1.0f, 1.0f, 1.0f, 0.02f };
+	glm::vec3 lightPosition{ -1.0f, -1.0f, -1.0f };
+	alignas(16) glm::vec4 lightColor{ 1.0f, 1.0f, 1.0f, 1.0f }; // w as intensity
 };
 
 App::App()
@@ -70,6 +72,7 @@ void App::run()
 
     // for store the camera state
     auto viewObject = GameObject::createGameObject();
+	viewObject.transform.translation.z = -2.5f;
     KeyboardMovementController cameraController{};
 
     auto lastTime = std::chrono::high_resolution_clock::now();
@@ -118,14 +121,26 @@ void App::run()
 
 void App::loadGameObjects()
 {
-    std::shared_ptr<Model> model = Model::createModelFromFile(device, "models/smooth_vase.obj");
+    std::shared_ptr<Model> model = Model::createModelFromFile(device, "models/flat_vase.obj");
+	GameObject flatVase = GameObject::createGameObject();
+	flatVase.model = model;
+	flatVase.transform.translation = { -0.5f, 0.5f, 0.0f };
+	flatVase.transform.scale = { 3.0f, 1.5f, 3.0f };
+	gameObjects.push_back(std::move(flatVase));
 
-	GameObject gameObject = GameObject::createGameObject();
-	gameObject.model = model;
-	gameObject.transform.translation = { 0.0f, 0.5f, 2.5f };
-	gameObject.transform.scale = { 3.0f, 1.5f, 3.0f };
+	model = Model::createModelFromFile(device, "models/smooth_vase.obj");
+	GameObject smoothVase = GameObject::createGameObject();
+	smoothVase.model = model;
+	smoothVase.transform.translation = { 0.5f, 0.5f, 0.0f };
+	smoothVase.transform.scale = { 3.0f, 1.5f, 3.0f };
+	gameObjects.push_back(std::move(smoothVase));
 
-	gameObjects.push_back(std::move(gameObject));
+	model = Model::createModelFromFile(device, "models/quad.obj");
+	GameObject quad = GameObject::createGameObject();
+	quad.model = model;
+	quad.transform.translation = { 0.0f, 0.5f, 0.0f };
+	quad.transform.scale = { 3.0f, 1.0f, 3.0f };
+	gameObjects.push_back(std::move(quad));
 }
 
 }
