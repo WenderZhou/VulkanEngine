@@ -10,6 +10,10 @@
 #include <cstring>
 #include <unordered_map>
 
+#ifndef ENGINE_DIR
+#define ENGINE_DIR "../"
+#endif
+
 namespace std
 {
 	template<>
@@ -171,7 +175,8 @@ void Model::createIndexBuffers(const std::vector<uint32_t>& indices)
 std::unique_ptr<Model> Model::createModelFromFile(Device& device, const std::string& filepath)
 {
 	Mesh mesh{};
-	mesh.load(filepath);
+	std::string enginePath = ENGINE_DIR + filepath;
+	mesh.load(enginePath);
 	return std::make_unique<Model>(device, mesh);
 }
 
