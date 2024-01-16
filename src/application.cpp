@@ -2,8 +2,9 @@
 
 #include "keyboard.h"
 #include "camera.h"
-#include "renderSystem.h"
 #include "buffer.h"
+#include "systems/renderSystem.h"
+#include "systems/pointLightSystem.h"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -19,7 +20,8 @@ namespace VulkanEngine
 
 struct GlobalUbo
 {
-	glm::mat4 projectionView{ 1.0f };
+	glm::mat4 projection{ 1.0f };
+	glm::mat4 view{ 1.0f };
 	glm::vec4 ambientLightColor{ 1.0f, 1.0f, 1.0f, 0.02f };
 	glm::vec3 lightPosition{ -1.0f, -1.0f, -1.0f };
 	alignas(16) glm::vec4 lightColor{ 1.0f, 1.0f, 1.0f, 1.0f }; // w as intensity
@@ -68,7 +70,8 @@ void App::run()
 	}
 
 	RenderSystem renderSystem{ device, renderer.getSwapchainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
-    Camera camera{};
+    PointLightSystem pointLightSystem{ device, renderer.getSwapchainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
+	Camera camera{};
 
     // for store the camera state
     auto viewObject = GameObject::createGameObject();
@@ -106,12 +109,14 @@ void App::run()
 			};
 
 			GlobalUbo ubo{};
-			ubo.projectionView = camera.getProjection() * camera.getView();
+			ubo.projection = camera.getProjection();
+			ubo.view = camera.getView();
 			uboBuffers[frameIndex]->writeToBuffer(&ubo);
 			uboBuffers[frameIndex]->flush();
 
 			renderer.beginSwapchainRenderPass(commandBuffer);
 			renderSystem.renderGameObjects(frameInfo);
+			pointLightSystem.render(frameInfo);
 			renderer.endSwapchainRenderPass(commandBuffer);
 			renderer.endFrame();
 		}

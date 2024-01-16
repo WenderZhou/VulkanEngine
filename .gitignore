@@ -400,3 +400,5 @@ FodyWeavers.xsd
 .vscode/
 
 build/
+
+shaders/*.spv
