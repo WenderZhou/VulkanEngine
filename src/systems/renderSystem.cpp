@@ -81,7 +81,7 @@ void RenderSystem::renderGameObjects(FrameInfo& frameInfo)
 	{
 		auto& obj = kv.second;
 
-		if (obj.model == nullptr)
+		if (obj.pModel == nullptr)
 			continue;
 
 		SimplePushConstantData push{};
@@ -90,8 +90,8 @@ void RenderSystem::renderGameObjects(FrameInfo& frameInfo)
 
 		vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &push);
 
-		obj.model->bind(frameInfo.commandBuffer);
-		obj.model->draw(frameInfo.commandBuffer);
+		obj.pModel->bind(frameInfo.commandBuffer);
+		obj.pModel->draw(frameInfo.commandBuffer);
 	}
 }
 

@@ -18,15 +18,6 @@
 namespace VulkanEngine
 {
 
-struct GlobalUbo
-{
-	glm::mat4 projection{ 1.0f };
-	glm::mat4 view{ 1.0f };
-	glm::vec4 ambientLightColor{ 1.0f, 1.0f, 1.0f, 0.02f };
-	glm::vec3 lightPosition{ -1.0f, -1.0f, -1.0f };
-	alignas(16) glm::vec4 lightColor{ 1.0f, 1.0f, 1.0f, 1.0f }; // w as intensity
-};
-
 App::App()
 {
 	globalPool = 
@@ -111,6 +102,7 @@ void App::run()
 			GlobalUbo ubo{};
 			ubo.projection = camera.getProjection();
 			ubo.view = camera.getView();
+			pointLightSystem.update(frameInfo, ubo);
 			uboBuffers[frameIndex]->writeToBuffer(&ubo);
 			uboBuffers[frameIndex]->flush();
 
@@ -127,26 +119,47 @@ void App::run()
 
 void App::loadGameObjects()
 {
-    std::shared_ptr<Model> model = Model::createModelFromFile(device, "models/flat_vase.obj");
+    std::shared_ptr<Model> pModel = Model::createModelFromFile(device, "models/flat_vase.obj");
 	GameObject flatVase = GameObject::createGameObject();
-	flatVase.model = model;
+	flatVase.pModel = pModel;
 	flatVase.transform.translation = { -0.5f, 0.5f, 0.0f };
 	flatVase.transform.scale = { 3.0f, 1.5f, 3.0f };
 	gameObjects.emplace(flatVase.getId(), std::move(flatVase));
 
-	model = Model::createModelFromFile(device, "models/smooth_vase.obj");
+	pModel = Model::createModelFromFile(device, "models/smooth_vase.obj");
 	GameObject smoothVase = GameObject::createGameObject();
-	smoothVase.model = model;
+	smoothVase.pModel = pModel;
 	smoothVase.transform.translation = { 0.5f, 0.5f, 0.0f };
 	smoothVase.transform.scale = { 3.0f, 1.5f, 3.0f };
 	gameObjects.emplace(smoothVase.getId(), std::move(smoothVase));
 
-	model = Model::createModelFromFile(device, "models/quad.obj");
+	pModel = Model::createModelFromFile(device, "models/quad.obj");
 	GameObject quad = GameObject::createGameObject();
-	quad.model = model;
+	quad.pModel = pModel;
 	quad.transform.translation = { 0.0f, 0.5f, 0.0f };
 	quad.transform.scale = { 3.0f, 1.0f, 3.0f };
 	gameObjects.emplace(quad.getId(), std::move(quad));
+
+	std::vector<glm::vec3> lightColors
+	{
+		{1.f, .1f, .1f},
+		{.1f, .1f, 1.f},
+		{.1f, 1.f, .1f},
+		{1.f, 1.f, .1f},
+		{.1f, 1.f, 1.f},
+		{1.f, 1.f, 1.f}  //
+	};
+
+	for (int i = 0; i < lightColors.size(); i++) {
+		auto pointLight = GameObject::createPointLight(0.2f, 0.1f, glm::vec3(1.0f, 1.0f, 1.0f));
+		pointLight.color = lightColors[i];
+		auto rotateLight = glm::rotate(
+			glm::mat4(1.f),
+			(i * glm::two_pi<float>()) / lightColors.size(),
+			{ 0.f, -1.f, 0.f });
+		pointLight.transform.translation = glm::vec3(rotateLight * glm::vec4(-1.f, -1.f, -1.f, 1.f));
+		gameObjects.emplace(pointLight.getId(), std::move(pointLight));
+	}
 }
 
 }
