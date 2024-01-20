@@ -402,3 +402,4 @@ FodyWeavers.xsd
 build/
 
 shaders/*.spv
+.env.cmake

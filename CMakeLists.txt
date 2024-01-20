@@ -5,8 +5,6 @@ cmake_minimum_required(VERSION 3.11.0)
 
 set(NAME VulkanEngine)
 
-set(CMAKE_GENERATOR_TOOLSET "v142" CACHE STRING "Platform Toolset" FORCE)
-
 message(STATUS "using ${CMAKE_GENERATOR}")
 
 project(${NAME})
@@ -75,6 +73,8 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CM
 
 if (WIN32)
   message(STATUS "CREATING BUILD FOR WINDOWS")
+
+  set(CMAKE_GENERATOR_TOOLSET "v142" CACHE STRING "Platform Toolset" FORCE)
 
   target_include_directories(${PROJECT_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/src
