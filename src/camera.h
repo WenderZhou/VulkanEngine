@@ -20,6 +20,7 @@ public:
 	const glm::mat4& getProjection() const { return projectionMatrix; }
 	const glm::mat4& getView() const { return viewMatrix; }
 	const glm::mat4& getInvView() const { return invViewMatrix; }
+	const glm::vec3 getPosition() const { return glm::vec3(invViewMatrix[3]); }
 
 private:
 	glm::mat4 projectionMatrix{ 1.0f };

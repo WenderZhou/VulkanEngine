@@ -7,6 +7,7 @@
 
 #include <array>
 #include <stdexcept>
+#include <map>
 
 namespace VulkanEngine
 {
@@ -56,6 +57,7 @@ void PointLightSystem::createPipeline(VkRenderPass renderPass)
 
 	PipelineConfigInfo pipelineConfigInfo{};
 	Pipeline::defaultPipelineConfigInfo(pipelineConfigInfo);
+	Pipeline::enableAlphaBlending(pipelineConfigInfo);
 	pipelineConfigInfo.attributeDescriptions.clear();
 	pipelineConfigInfo.bindingDescriptions.clear();
 	pipelineConfigInfo.renderPass = renderPass;
@@ -74,7 +76,7 @@ void PointLightSystem::update(FrameInfo& frameInfo, GlobalUbo& ubo)
 		if (obj.pPointLightComponent == nullptr)
 			continue;
 		
-		obj.transform.translation = glm::vec3(rotateLight * glm::vec4(obj.transform.translation, 1.f));
+		//obj.transform.translation = glm::vec3(rotateLight * glm::vec4(obj.transform.translation, 1.f));
 
 		ubo.pointLights[lightCount].position = glm::vec4(obj.transform.translation, 1.0f);
 		ubo.pointLights[lightCount].color = glm::vec4(obj.color, obj.pPointLightComponent->lightIntensity);
@@ -85,6 +87,18 @@ void PointLightSystem::update(FrameInfo& frameInfo, GlobalUbo& ubo)
 
 void PointLightSystem::render(FrameInfo& frameInfo)
 {
+	std::map<float, GameObject::id_t> map;
+	for (auto& vk : frameInfo.gameObjects)
+	{
+		auto& obj = vk.second;
+		if(obj.pPointLightComponent != nullptr)
+		{
+			glm::vec3 diff = frameInfo.camera.getPosition() - obj.transform.translation;
+			float dist2 = glm::dot(diff, diff);
+			map[dist2] = obj.getId();
+		}
+	}
+
 	pipeline->bind(frameInfo.commandBuffer);
 
 	glm::mat4 projectionView = frameInfo.camera.getProjection() * frameInfo.camera.getView();
@@ -99,11 +113,9 @@ void PointLightSystem::render(FrameInfo& frameInfo)
 		0,
 		nullptr);
 
-	for (auto& vk : frameInfo.gameObjects)
+	for (auto it = map.rbegin(); it != map.rend(); ++it)
 	{
-		auto& obj = vk.second;
-		if (obj.pPointLightComponent == nullptr)
-			continue;
+		auto& obj = frameInfo.gameObjects.at(it->second);
 
 		PointLightPushConstant push{};
 		push.position = glm::vec4(obj.transform.translation, 1.0f);

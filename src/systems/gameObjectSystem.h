@@ -12,16 +12,16 @@
 namespace VulkanEngine
 {
 
-	class RenderSystem
+	class GameObjectSystem
 	{
 	public:
-		RenderSystem(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
-		~RenderSystem();
+		GameObjectSystem(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
+		~GameObjectSystem();
 
-		RenderSystem(const RenderSystem&) = delete;
-		RenderSystem& operator=(const RenderSystem&) = delete;
+		GameObjectSystem(const GameObjectSystem&) = delete;
+		GameObjectSystem& operator=(const GameObjectSystem&) = delete;
 
-		void renderGameObjects(FrameInfo& frameInfo);
+		void render(FrameInfo& frameInfo);
 
 	private:
 		void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);

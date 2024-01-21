@@ -1,4 +1,4 @@
-#include "renderSystem.h"
+#include "gameObjectSystem.h"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -17,18 +17,18 @@ struct SimplePushConstantData
 	glm::mat4 normalMatrix{ 1.0f };
 };
 
-RenderSystem::RenderSystem(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout) :device{ device }
+GameObjectSystem::GameObjectSystem(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout) :device{ device }
 {
 	createPipelineLayout(globalSetLayout);
 	createPipeline(renderPass);
 }
 
-RenderSystem::~RenderSystem()
+GameObjectSystem::~GameObjectSystem()
 {
 	vkDestroyPipelineLayout(device.device(), pipelineLayout, nullptr);
 }
 
-void RenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout)
+void GameObjectSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout)
 {
 	VkPushConstantRange pushConstantRange{};
 	pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -49,7 +49,7 @@ void RenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout)
 	}
 }
 
-void RenderSystem::createPipeline(VkRenderPass renderPass)
+void GameObjectSystem::createPipeline(VkRenderPass renderPass)
 {
 	assert(pipelineLayout != nullptr && "Can not create pipeline before pipeline layout");
 
@@ -61,7 +61,7 @@ void RenderSystem::createPipeline(VkRenderPass renderPass)
 	pipeline = std::make_unique<Pipeline>(device, "shaders/basic.vert.spv", "shaders/basic.frag.spv", pipelineConfigInfo);
 }
 
-void RenderSystem::renderGameObjects(FrameInfo& frameInfo)
+void GameObjectSystem::render(FrameInfo& frameInfo)
 {
 	pipeline->bind(frameInfo.commandBuffer);
 

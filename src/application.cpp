@@ -3,7 +3,7 @@
 #include "keyboard.h"
 #include "camera.h"
 #include "buffer.h"
-#include "systems/renderSystem.h"
+#include "systems/gameObjectSystem.h"
 #include "systems/pointLightSystem.h"
 
 #define GLM_FORCE_RADIANS
@@ -60,7 +60,7 @@ void App::run()
 			.build(globalDescriptorSets[i]);
 	}
 
-	RenderSystem renderSystem{ device, renderer.getSwapchainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
+	GameObjectSystem gameObjectSystem{ device, renderer.getSwapchainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
     PointLightSystem pointLightSystem{ device, renderer.getSwapchainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
 	Camera camera{};
 
@@ -108,8 +108,11 @@ void App::run()
 			uboBuffers[frameIndex]->flush();
 
 			renderer.beginSwapchainRenderPass(commandBuffer);
-			renderSystem.renderGameObjects(frameInfo);
+
+			// order matters
+			gameObjectSystem.render(frameInfo);
 			pointLightSystem.render(frameInfo);
+
 			renderer.endSwapchainRenderPass(commandBuffer);
 			renderer.endFrame();
 		}
