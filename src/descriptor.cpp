@@ -51,29 +51,33 @@ namespace VulkanEngine {
         }
     }
 
-    DescriptorSetLayout::~DescriptorSetLayout() {
+    DescriptorSetLayout::~DescriptorSetLayout()
+    {
         vkDestroyDescriptorSetLayout(device.device(), descriptorSetLayout, nullptr);
     }
 
     // *************** Descriptor Pool Builder *********************
 
-    DescriptorPool::Builder& DescriptorPool::Builder::addPoolSize(
-        VkDescriptorType descriptorType, uint32_t count) {
+    DescriptorPool::Builder& DescriptorPool::Builder::addPoolSize(VkDescriptorType descriptorType, uint32_t count)
+    {
         poolSizes.push_back({ descriptorType, count });
         return *this;
     }
 
-    DescriptorPool::Builder& DescriptorPool::Builder::setPoolFlags(
-        VkDescriptorPoolCreateFlags flags) {
+    DescriptorPool::Builder& DescriptorPool::Builder::setPoolFlags(VkDescriptorPoolCreateFlags flags)
+    {
         poolFlags = flags;
         return *this;
     }
-    DescriptorPool::Builder& DescriptorPool::Builder::setMaxSets(uint32_t count) {
+
+    DescriptorPool::Builder& DescriptorPool::Builder::setMaxSets(uint32_t count)
+    {
         maxSets = count;
         return *this;
     }
 
-    std::unique_ptr<DescriptorPool> DescriptorPool::Builder::build() const {
+    std::unique_ptr<DescriptorPool> DescriptorPool::Builder::build() const
+    {
         return std::make_unique<DescriptorPool>(device, maxSets, poolFlags, poolSizes);
     }
 
@@ -128,6 +132,11 @@ namespace VulkanEngine {
 
     void DescriptorPool::resetPool() {
         vkResetDescriptorPool(device.device(), descriptorPool, 0);
+    }
+
+    VkDescriptorPool DescriptorPool::getDescriptorPool()
+    {
+        return descriptorPool;
     }
 
     // *************** Descriptor Writer *********************

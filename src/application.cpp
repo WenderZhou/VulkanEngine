@@ -15,6 +15,10 @@
 #include <array>
 #include <chrono>
 
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_vulkan.h"
+
 namespace VulkanEngine
 {
 
@@ -22,8 +26,9 @@ App::App()
 {
 	globalPool = 
 		DescriptorPool::Builder(device)
-		.setMaxSets(Swapchain::MAX_FRAMES_IN_FLIGHT)
 		.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Swapchain::MAX_FRAMES_IN_FLIGHT)
+		.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, Swapchain::MAX_FRAMES_IN_FLIGHT)
+		.setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
 		.build();
 	loadGameObjects();
 }
@@ -31,6 +36,27 @@ App::App()
 App::~App()
 {
 
+}
+
+void App::initImGui()
+{
+	ImGui::CreateContext();
+	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+	ImGui_ImplGlfw_InitForVulkan(window.getGLFWWindow(), true);
+
+	ImGui_ImplVulkan_InitInfo info{};
+	info.DescriptorPool = globalPool->getDescriptorPool();
+	info.Device = device.device();
+	info.PhysicalDevice = device.getPhysicalDevice();
+	info.ImageCount = Swapchain::MAX_FRAMES_IN_FLIGHT;
+	info.Instance = device.getInstance();
+	info.Queue = device.graphicsQueue();
+	info.MinImageCount = 2;
+
+	ImGui_ImplVulkan_Init(&info, renderer.getSwapchainRenderPass());
+
+	ImGui_ImplVulkan_CreateFontsTexture();
 }
 
 void App::run()
@@ -68,6 +94,8 @@ void App::run()
     auto viewObject = GameObject::createGameObject();
 	viewObject.transform.translation.z = -2.5f;
     KeyboardMovementController cameraController{};
+
+	initImGui();
 
     auto lastTime = std::chrono::high_resolution_clock::now();
 
@@ -113,12 +141,25 @@ void App::run()
 			gameObjectSystem.render(frameInfo);
 			pointLightSystem.render(frameInfo);
 
+			ImGui_ImplVulkan_NewFrame();
+			ImGui_ImplGlfw_NewFrame();
+			ImGui::NewFrame();
+
+			ImGui::ShowDemoWindow();
+
+			ImGui::Render();
+			ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+
 			renderer.endSwapchainRenderPass(commandBuffer);
 			renderer.endFrame();
 		}
 	}
 
 	vkDeviceWaitIdle(device.device());
+
+	ImGui_ImplVulkan_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 }
 
 void App::loadGameObjects()

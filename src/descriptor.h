@@ -77,6 +77,8 @@ namespace VulkanEngine {
 
 		void resetPool();
 
+		VkDescriptorPool getDescriptorPool();
+
 	private:
 		Device& device;
 		VkDescriptorPool descriptorPool;
