@@ -7,6 +7,8 @@ set(NAME VulkanEngine)
 
 message(STATUS "using ${CMAKE_GENERATOR}")
 
+set(CMAKE_GENERATOR_TOOLSET "v142")
+
 project(${NAME})
 
 # 1. Set VULKAN_SDK_PATH in .env.cmake to target specific vulkan version
@@ -54,27 +56,40 @@ if (NOT TINYOBJ_PATH)
   set(TINYOBJ_PATH external/tinyobjloader)
 endif()
 
-file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
-file(GLOB_RECURSE HEADERS ${PROJECT_SOURCE_DIR}/src/*.h)
-file(GLOB_RECURSE SHADERS
-  ${PROJECT_SOURCE_DIR}/shaders/*.frag
-  ${PROJECT_SOURCE_DIR}/shaders/*.vert
-)
-
-add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS} ${SHADERS})
-
-source_group(source FILES ${SOURCES})
-source_group(header FILES ${HEADERS})
-source_group(shader FILES ${SHADERS})
-
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
-
-set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/build")
+file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp ${PROJECT_SOURCE_DIR}/src/*.h)
+file(GLOB_RECURSE EXTERNALSOURCES ${PROJECT_SOURCE_DIR}/external/*.cpp ${PROJECT_SOURCE_DIR}/external/*.h)
+file(GLOB_RECURSE SHADERS ${PROJECT_SOURCE_DIR}/shaders/*.frag ${PROJECT_SOURCE_DIR}/shaders/*.vert)
 
 if (WIN32)
   message(STATUS "CREATING BUILD FOR WINDOWS")
 
-  set(CMAKE_GENERATOR_TOOLSET "v142" CACHE STRING "Platform Toolset" FORCE)
+  set_property ( DIRECTORY ${PROJECT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${NAME} )
+
+  function(assign_source_group)
+    foreach(_source IN ITEMS ${ARGN})
+      if (IS_ABSOLUTE "${_source}")
+          file(RELATIVE_PATH _source_rel "${CMAKE_CURRENT_SOURCE_DIR}" "${_source}")
+      else()
+          set(_source_rel "${_source}")
+      endif()
+      get_filename_component(_source_path "${_source_rel}" PATH)
+      string(REPLACE "/" "\\" _source_path_msvc "${_source_path}")
+      source_group("${_source_path_msvc}" FILES "${_source}")
+    endforeach()
+  endfunction(assign_source_group)
+
+  function(my_add_executable)
+      foreach(_source IN ITEMS ${ARGN})
+          assign_source_group(${_source})
+      endforeach()
+      add_executable(${ARGV})
+  endfunction(my_add_executable)
+
+  my_add_executable(${PROJECT_NAME} ${SOURCES} ${EXTERNALSOURCES} ${SHADERS})
+
+  target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+
+  set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/build")
 
   target_include_directories(${PROJECT_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/src
