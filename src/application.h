@@ -5,6 +5,7 @@
 #include "renderer.h"
 #include "gameobject.h"
 #include "descriptor.h"
+#include "ui.h"
 
 #include <memory>
 #include <vector>
@@ -25,8 +26,6 @@ public:
 	App& operator=(const App&) = delete;
 
 	void run();
-
-	void initImGui();
 
 private:
 	void loadGameObjects();

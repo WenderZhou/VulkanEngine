@@ -7,7 +7,9 @@ set(NAME VulkanEngine)
 
 message(STATUS "using ${CMAKE_GENERATOR}")
 
-set(CMAKE_GENERATOR_TOOLSET "v142")
+if (WIN32)
+  set(CMAKE_GENERATOR_TOOLSET "v142")
+endif()
 
 project(${NAME})
 
@@ -108,10 +110,16 @@ if (WIN32)
 
 elseif (UNIX)
     message(STATUS "CREATING BUILD FOR UNIX")
+
+    add_executable(${PROJECT_NAME} ${SOURCES} ${EXTERNALSOURCES} ${SHADERS})
+
+    target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+
     target_include_directories(${PROJECT_NAME} PUBLIC
       ${PROJECT_SOURCE_DIR}/src
       ${TINYOBJ_PATH}
     )
+
     target_link_libraries(${PROJECT_NAME} glfw ${Vulkan_LIBRARIES})
 endif()
 

@@ -15,10 +15,6 @@
 #include <array>
 #include <chrono>
 
-#include "imgui/imgui.h"
-#include "imgui/imgui_impl_glfw.h"
-#include "imgui/imgui_impl_vulkan.h"
-
 namespace VulkanEngine
 {
 
@@ -36,27 +32,6 @@ App::App()
 App::~App()
 {
 
-}
-
-void App::initImGui()
-{
-	ImGui::CreateContext();
-	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-
-	ImGui_ImplGlfw_InitForVulkan(window.getGLFWWindow(), true);
-
-	ImGui_ImplVulkan_InitInfo info{};
-	info.DescriptorPool = globalPool->getDescriptorPool();
-	info.Device = device.device();
-	info.PhysicalDevice = device.getPhysicalDevice();
-	info.ImageCount = Swapchain::MAX_FRAMES_IN_FLIGHT;
-	info.Instance = device.getInstance();
-	info.Queue = device.graphicsQueue();
-	info.MinImageCount = 2;
-
-	ImGui_ImplVulkan_Init(&info, renderer.getSwapchainRenderPass());
-
-	ImGui_ImplVulkan_CreateFontsTexture();
 }
 
 void App::run()
@@ -95,7 +70,7 @@ void App::run()
 	viewObject.transform.translation.z = -2.5f;
     KeyboardMovementController cameraController{};
 
-	initImGui();
+	UI ui{ window, device, renderer, globalPool };
 
     auto lastTime = std::chrono::high_resolution_clock::now();
 
@@ -141,14 +116,7 @@ void App::run()
 			gameObjectSystem.render(frameInfo);
 			pointLightSystem.render(frameInfo);
 
-			ImGui_ImplVulkan_NewFrame();
-			ImGui_ImplGlfw_NewFrame();
-			ImGui::NewFrame();
-
-			ImGui::ShowDemoWindow();
-
-			ImGui::Render();
-			ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+			ui.render(commandBuffer);
 
 			renderer.endSwapchainRenderPass(commandBuffer);
 			renderer.endFrame();
@@ -156,10 +124,6 @@ void App::run()
 	}
 
 	vkDeviceWaitIdle(device.device());
-
-	ImGui_ImplVulkan_Shutdown();
-	ImGui_ImplGlfw_Shutdown();
-	ImGui::DestroyContext();
 }
 
 void App::loadGameObjects()
