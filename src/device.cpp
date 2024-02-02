@@ -88,7 +88,7 @@ void Device::createInstance()
 
 	VkApplicationInfo appInfo = {};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-	appInfo.pApplicationName = "LittleVulkanEngine App";
+	appInfo.pApplicationName = "VulkanEngine App";
 	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.pEngineName = "No Engine";
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
@@ -126,19 +126,42 @@ void Device::createInstance()
 	hasGflwRequiredInstanceExtensions();
 }
 
+bool Device::isDeviceSuitable(VkPhysicalDevice device)
+{
+	QueueFamilyIndices indices = findQueueFamilies(device);
+
+	bool extensionsSupported = checkDeviceExtensionSupport(device);
+
+	bool swapChainAdequate = false;
+	if(extensionsSupported)
+	{
+		SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
+		swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
+	}
+
+	VkPhysicalDeviceProperties deviceProperties;
+	vkGetPhysicalDeviceProperties(device, &deviceProperties);
+
+	VkPhysicalDeviceFeatures deviceFeatures;
+	vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+	return indices.isComplete() && extensionsSupported && swapChainAdequate &&
+		deviceFeatures.samplerAnisotropy;
+}
+
 void Device::pickPhysicalDevice()
 {
-	uint32_t deviceCount = 0;
-	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
-	if(deviceCount == 0)
+	uint32_t physicalDeviceCount = 0;
+	vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, nullptr);
+	if(physicalDeviceCount == 0)
 	{
 		throw std::runtime_error("failed to find GPUs with Vulkan support!");
 	}
-	std::cout << "Device count: " << deviceCount << std::endl;
-	std::vector<VkPhysicalDevice> devices(deviceCount);
-	vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+	std::cout << "physical device count: " << physicalDeviceCount << std::endl;
+	std::vector<VkPhysicalDevice> physicalDevices(physicalDeviceCount);
+	vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, physicalDevices.data());
 
-	for(const auto& device : devices)
+	for(const auto& device : physicalDevices)
 	{
 		if(isDeviceSuitable(device))
 		{
@@ -227,26 +250,6 @@ void Device::createCommandPool()
 void Device::createSurface()
 {
 	window.createWindowSurface(instance, &surface_);
-}
-
-bool Device::isDeviceSuitable(VkPhysicalDevice device)
-{
-	QueueFamilyIndices indices = findQueueFamilies(device);
-
-	bool extensionsSupported = checkDeviceExtensionSupport(device);
-
-	bool swapChainAdequate = false;
-	if(extensionsSupported)
-	{
-		SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
-		swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
-	}
-
-	VkPhysicalDeviceFeatures supportedFeatures;
-	vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
-
-	return indices.isComplete() && extensionsSupported && swapChainAdequate &&
-		supportedFeatures.samplerAnisotropy;
 }
 
 void Device::populateDebugMessengerCreateInfo(
@@ -611,4 +614,4 @@ void Device::createImageWithInfo(
 	}
 }
 
-}  // namespace lve
+}

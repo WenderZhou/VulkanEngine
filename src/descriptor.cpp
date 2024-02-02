@@ -220,4 +220,4 @@ void DescriptorWriter::overwrite(VkDescriptorSet& set)
 	vkUpdateDescriptorSets(pool.device.device(), writes.size(), writes.data(), 0, nullptr);
 }
 
-}  // namespace lve
+}
