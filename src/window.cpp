@@ -7,7 +7,14 @@ namespace VulkanEngine
 
 Window::Window(int w, int h, std::string name) :width(w), height(h), windowName(name)
 {
-	initWindow();
+	glfwInit();
+
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);	// not generate OpenGL context
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+
+	glfwWindow = glfwCreateWindow(width, height, windowName.c_str(), nullptr, nullptr);
+	glfwSetWindowUserPointer(glfwWindow, this);
+	glfwSetFramebufferSizeCallback(glfwWindow, framebufferResizeCallback);
 }
 
 Window::~Window()
@@ -30,18 +37,6 @@ void Window::framebufferResizeCallback(GLFWwindow* glfwWindow, int width, int he
 	window->framebufferResized = true;
 	window->width = width;
 	window->height = height;
-}
-
-void Window::initWindow()
-{
-	glfwInit();
-
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);	// not generate OpenGL context
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-
-	glfwWindow = glfwCreateWindow(width, height, windowName.c_str(), nullptr, nullptr);
-	glfwSetWindowUserPointer(glfwWindow, this);
-	glfwSetFramebufferSizeCallback(glfwWindow, framebufferResizeCallback);
 }
 
 }

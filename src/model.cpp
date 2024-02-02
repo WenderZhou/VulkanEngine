@@ -16,16 +16,16 @@
 
 namespace std
 {
-	template<>
-	struct hash<VulkanEngine::Model::Vertex>
+template<>
+struct hash<VulkanEngine::Model::Vertex>
+{
+	size_t operator()(VulkanEngine::Model::Vertex const& vertex) const
 	{
-		size_t operator()(VulkanEngine::Model::Vertex const& vertex) const
-		{
-			size_t seed = 0;
-			VulkanEngine::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.texcoord);
-			return seed;
-		}
-	};
+		size_t seed = 0;
+		VulkanEngine::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.texcoord);
+		return seed;
+	}
+};
 }
 
 namespace VulkanEngine
@@ -38,7 +38,7 @@ void Model::Mesh::load(const std::string& filepath)
 	std::vector<tinyobj::material_t> materials;
 	std::string warn, err;
 
-	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filepath.c_str()))
+	if(!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filepath.c_str()))
 	{
 		throw std::runtime_error(warn + err);
 	}
@@ -47,13 +47,13 @@ void Model::Mesh::load(const std::string& filepath)
 	indices.clear();
 
 	std::unordered_map<Vertex, uint32_t> uniqueVertices{};
-	for (const auto& shape : shapes)
+	for(const auto& shape : shapes)
 	{
-		for (const auto& index : shape.mesh.indices)
+		for(const auto& index : shape.mesh.indices)
 		{
 			Vertex vertex{};
 
-			if (index.vertex_index >= 0)
+			if(index.vertex_index >= 0)
 			{
 				vertex.position =
 				{
@@ -70,7 +70,7 @@ void Model::Mesh::load(const std::string& filepath)
 				};
 			}
 
-			if (index.normal_index >= 0)
+			if(index.normal_index >= 0)
 			{
 				vertex.normal =
 				{
@@ -80,7 +80,7 @@ void Model::Mesh::load(const std::string& filepath)
 				};
 			}
 
-			if (index.texcoord_index >= 0)
+			if(index.texcoord_index >= 0)
 			{
 				vertex.texcoord =
 				{
@@ -90,12 +90,12 @@ void Model::Mesh::load(const std::string& filepath)
 			}
 
 
-			if (uniqueVertices.count(vertex) == 0)
+			if(uniqueVertices.count(vertex) == 0)
 			{
 				uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
 				vertices.push_back(vertex);
 			}
-			
+
 			indices.push_back(uniqueVertices[vertex]);
 		}
 	}
@@ -154,7 +154,7 @@ void Model::createIndexBuffers(const std::vector<uint32_t>& indices)
 	indexCount = static_cast<uint32_t>(indices.size());
 	hasIndexBuffer = indexCount > 0;
 
-	if (!hasIndexBuffer)
+	if(!hasIndexBuffer)
 	{
 		return;
 	}
@@ -186,7 +186,7 @@ void Model::bind(VkCommandBuffer commandBuffer)
 	VkDeviceSize offsets[] = { 0 };
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
 
-	if (hasIndexBuffer)
+	if(hasIndexBuffer)
 	{
 		vkCmdBindIndexBuffer(commandBuffer, indexBuffer->getBuffer(), 0, VK_INDEX_TYPE_UINT32);
 	}
@@ -194,7 +194,7 @@ void Model::bind(VkCommandBuffer commandBuffer)
 
 void Model::draw(VkCommandBuffer commandBuffer)
 {
-	if (hasIndexBuffer)
+	if(hasIndexBuffer)
 	{
 		vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
 	}
@@ -203,5 +203,5 @@ void Model::draw(VkCommandBuffer commandBuffer)
 		vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);
 	}
 }
-	
+
 }

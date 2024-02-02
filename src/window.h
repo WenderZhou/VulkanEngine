@@ -28,7 +28,6 @@ public:
 
 private:
 	static void framebufferResizeCallback(GLFWwindow* glfwWindow, int width, int height);
-	void initWindow();
 
 	int width;
 	int height;

@@ -29,7 +29,7 @@ void Renderer::createCommandBuffers()
 	allocInfo.commandPool = device.getCommandPool();
 	allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
 
-	if (vkAllocateCommandBuffers(device.device(), &allocInfo, commandBuffers.data()) != VK_SUCCESS)
+	if(vkAllocateCommandBuffers(device.device(), &allocInfo, commandBuffers.data()) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to create command buffer");
 	}
@@ -38,7 +38,7 @@ void Renderer::createCommandBuffers()
 void Renderer::recreateSwapchain()
 {
 	auto extent = window.getExtent();
-	while (extent.width == 0 || extent.height == 0)
+	while(extent.width == 0 || extent.height == 0)
 	{
 		extent = window.getExtent();
 		glfwWaitEvents();
@@ -46,7 +46,7 @@ void Renderer::recreateSwapchain()
 
 	vkDeviceWaitIdle(device.device());
 
-	if (swapchain == nullptr)
+	if(swapchain == nullptr)
 	{
 		swapchain = std::make_unique<Swapchain>(device, extent);
 	}
@@ -55,7 +55,7 @@ void Renderer::recreateSwapchain()
 		std::shared_ptr<Swapchain> oldSwapchain = std::move(swapchain);
 		swapchain = std::make_unique<Swapchain>(device, extent, oldSwapchain);
 
-		if (!oldSwapchain->compareSwapFormats(*swapchain.get()))
+		if(!oldSwapchain->compareSwapFormats(*swapchain.get()))
 		{
 			throw std::runtime_error("Swap chain image(or depth) format has changed");
 		}
@@ -74,13 +74,13 @@ VkCommandBuffer Renderer::beginFrame()
 
 	VkResult result = swapchain->acquireNextImage(&currentImageIndex);
 
-	if (result == VK_ERROR_OUT_OF_DATE_KHR)
+	if(result == VK_ERROR_OUT_OF_DATE_KHR)
 	{
 		recreateSwapchain();
 		return nullptr;
 	}
 
-	if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+	if(result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
 	{
 		throw std::runtime_error("failed to acquire swap chain image");
 	}
@@ -93,7 +93,7 @@ VkCommandBuffer Renderer::beginFrame()
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-	if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
+	if(vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to begin recording command buffer");
 	}
@@ -107,18 +107,18 @@ void Renderer::endFrame()
 
 	VkCommandBuffer commandBuffer = getCurrentCommandBuffer();
 
-	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+	if(vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to record command buffer");
 	}
 
 	VkResult result = swapchain->submitCommandBuffers(&commandBuffer, &currentImageIndex);
-	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window.wasWindowResized())
+	if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window.wasWindowResized())
 	{
 		window.resetWindowResizedFlag();
 		recreateSwapchain();
 	}
-	else if (result != VK_SUCCESS)
+	else if(result != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to present swap chain image");
 	}

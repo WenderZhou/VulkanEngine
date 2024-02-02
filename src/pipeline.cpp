@@ -36,7 +36,7 @@ std::vector<char> Pipeline::readFile(const std::string& filepath)
 	std::string enginePath = ENGINE_DIR + filepath;
 	std::ifstream file{ enginePath, std::ios::ate | std::ios::binary };
 
-	if (!file.is_open())
+	if(!file.is_open())
 	{
 		throw std::runtime_error("failed to open file: " + filepath);
 	}
@@ -110,7 +110,7 @@ void Pipeline::createGraphicsPipeline(
 	pipelineInfo.basePipelineIndex = -1;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-	if (vkCreateGraphicsPipelines(device.device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS)
+	if(vkCreateGraphicsPipelines(device.device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to create graphics pipeline");
 	}
@@ -123,7 +123,7 @@ void Pipeline::createShaderModule(const std::vector<char>& code, VkShaderModule*
 	createInfo.codeSize = code.size();
 	createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
 
-	if (vkCreateShaderModule(device.device(), &createInfo, nullptr, shaderModule) != VK_SUCCESS)
+	if(vkCreateShaderModule(device.device(), &createInfo, nullptr, shaderModule) != VK_SUCCESS)
 	{
 		throw std::runtime_error("fail to create shader module");
 	}

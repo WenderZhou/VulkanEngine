@@ -20,7 +20,7 @@ namespace VulkanEngine
 
 App::App()
 {
-	globalPool = 
+	globalPool =
 		DescriptorPool::Builder(device)
 		.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Swapchain::MAX_FRAMES_IN_FLIGHT)
 		.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, Swapchain::MAX_FRAMES_IN_FLIGHT)
@@ -37,7 +37,7 @@ App::~App()
 void App::run()
 {
 	std::vector<std::unique_ptr<Buffer>> uboBuffers(Swapchain::MAX_FRAMES_IN_FLIGHT);
-	for (int i = 0; i < uboBuffers.size(); i++)
+	for(int i = 0; i < uboBuffers.size(); i++)
 	{
 		uboBuffers[i] = std::make_unique<Buffer>(
 			device,
@@ -53,7 +53,7 @@ void App::run()
 		.build();
 
 	std::vector<VkDescriptorSet> globalDescriptorSets(Swapchain::MAX_FRAMES_IN_FLIGHT);
-	for (int i = 0; i < globalDescriptorSets.size(); i++)
+	for(int i = 0; i < globalDescriptorSets.size(); i++)
 	{
 		auto bufferInfo = uboBuffers[i]->descriptorInfo();
 		DescriptorWriter(*globalSetLayout, *globalPool)
@@ -62,33 +62,33 @@ void App::run()
 	}
 
 	GameObjectSystem gameObjectSystem{ device, renderer.getSwapchainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
-    PointLightSystem pointLightSystem{ device, renderer.getSwapchainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
+	PointLightSystem pointLightSystem{ device, renderer.getSwapchainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
 	Camera camera{};
 
-    // for store the camera state
-    auto viewObject = GameObject::createGameObject();
+	// for store the camera state
+	auto viewObject = GameObject::createGameObject();
 	viewObject.transform.translation.z = -2.5f;
-    KeyboardMovementController cameraController{};
+	KeyboardMovementController cameraController{};
 
 	UI ui{ window, device, renderer, globalPool };
 
-    auto lastTime = std::chrono::high_resolution_clock::now();
+	auto lastTime = std::chrono::high_resolution_clock::now();
 
-	while (!window.shouldClose())
+	while(!window.shouldClose())
 	{
 		glfwPollEvents();
-		
-        auto currTime = std::chrono::high_resolution_clock::now();
-        float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(currTime - lastTime).count();
-        lastTime = currTime;
 
-        cameraController.moveInPlaneXZ(window.getGLFWWindow(), frameTime, viewObject);
-        camera.setViewYXZ(viewObject.transform.translation, viewObject.transform.rotation);
+		auto currTime = std::chrono::high_resolution_clock::now();
+		float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(currTime - lastTime).count();
+		lastTime = currTime;
 
-        float aspectRatio = renderer.getAspectRatio();
-        camera.setPerspectiveProjection(glm::radians(50.0f), aspectRatio, 0.1f, 100.f);
+		cameraController.moveInPlaneXZ(window.getGLFWWindow(), frameTime, viewObject);
+		camera.setViewYXZ(viewObject.transform.translation, viewObject.transform.rotation);
 
-		if (VkCommandBuffer commandBuffer = renderer.beginFrame())
+		float aspectRatio = renderer.getAspectRatio();
+		camera.setPerspectiveProjection(glm::radians(50.0f), aspectRatio, 0.1f, 100.f);
+
+		if(VkCommandBuffer commandBuffer = renderer.beginFrame())
 		{
 			int frameIndex = renderer.getFrameIndex();
 
@@ -128,7 +128,7 @@ void App::run()
 
 void App::loadGameObjects()
 {
-    std::shared_ptr<Model> pModel = Model::createModelFromFile(device, "models/flat_vase.obj");
+	std::shared_ptr<Model> pModel = Model::createModelFromFile(device, "models/flat_vase.obj");
 	GameObject flatVase = GameObject::createGameObject();
 	flatVase.pModel = pModel;
 	flatVase.transform.translation = { -0.5f, 0.5f, 0.0f };
@@ -159,7 +159,8 @@ void App::loadGameObjects()
 		{1.f, 1.f, 1.f}  //
 	};
 
-	for (int i = 0; i < lightColors.size(); i++) {
+	for(int i = 0; i < lightColors.size(); i++)
+	{
 		auto pointLight = GameObject::createPointLight(0.2f, 0.1f, glm::vec3(1.0f, 1.0f, 1.0f));
 		pointLight.color = lightColors[i];
 		auto rotateLight = glm::rotate(

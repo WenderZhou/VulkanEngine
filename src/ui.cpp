@@ -3,9 +3,9 @@
 namespace VulkanEngine
 {
 
-UI::UI(Window &window, Device &device, Renderer &renderer, std::unique_ptr<DescriptorPool> &descriptorPool)
+UI::UI(Window& window, Device& device, Renderer& renderer, std::unique_ptr<DescriptorPool>& descriptorPool)
 {
-    ImGui::CreateContext();
+	ImGui::CreateContext();
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
 	ImGui_ImplGlfw_InitForVulkan(window.getGLFWWindow(), true);
@@ -26,21 +26,21 @@ UI::UI(Window &window, Device &device, Renderer &renderer, std::unique_ptr<Descr
 
 UI::~UI()
 {
-    ImGui_ImplVulkan_Shutdown();
+	ImGui_ImplVulkan_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
 }
 
 void UI::render(VkCommandBuffer commandBuffer)
 {
-    ImGui_ImplVulkan_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
+	ImGui_ImplVulkan_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
 
-    ImGui::Text("Hello, world");
+	ImGui::Text("Hello, world");
 
-    ImGui::Render();
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+	ImGui::Render();
+	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 }
 
 }
