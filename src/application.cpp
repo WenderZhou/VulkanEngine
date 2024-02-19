@@ -123,7 +123,7 @@ void App::run()
 		}
 	}
 
-	vkDeviceWaitIdle(device.device());
+	device.waitIdle();
 }
 
 void App::loadGameObjects()

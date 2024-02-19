@@ -29,7 +29,7 @@ void Renderer::createCommandBuffers()
 	allocInfo.commandPool = device.getCommandPool();
 	allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
 
-	if(vkAllocateCommandBuffers(device.device(), &allocInfo, commandBuffers.data()) != VK_SUCCESS)
+	if(vkAllocateCommandBuffers(device.getDevice(), &allocInfo, commandBuffers.data()) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to create command buffer");
 	}
@@ -44,7 +44,7 @@ void Renderer::recreateSwapchain()
 		glfwWaitEvents();
 	}
 
-	vkDeviceWaitIdle(device.device());
+	vkDeviceWaitIdle(device.getDevice());
 
 	if(swapchain == nullptr)
 	{
@@ -64,7 +64,7 @@ void Renderer::recreateSwapchain()
 
 void Renderer::freeCommandBuffers()
 {
-	vkFreeCommandBuffers(device.device(), device.getCommandPool(), static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
+	vkFreeCommandBuffers(device.getDevice(), device.getCommandPool(), static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
 	commandBuffers.clear();
 }
 

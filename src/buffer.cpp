@@ -53,8 +53,8 @@ Buffer::Buffer(
 Buffer::~Buffer()
 {
 	unmap();
-	vkDestroyBuffer(device.device(), buffer, nullptr);
-	vkFreeMemory(device.device(), memory, nullptr);
+	vkDestroyBuffer(device.getDevice(), buffer, nullptr);
+	vkFreeMemory(device.getDevice(), memory, nullptr);
 }
 
 /**
@@ -69,7 +69,7 @@ Buffer::~Buffer()
 VkResult Buffer::map(VkDeviceSize size, VkDeviceSize offset)
 {
 	assert(buffer && memory && "Called map on buffer before create");
-	return vkMapMemory(device.device(), memory, offset, size, 0, &mapped);
+	return vkMapMemory(device.getDevice(), memory, offset, size, 0, &mapped);
 }
 
 /**
@@ -81,7 +81,7 @@ void Buffer::unmap()
 {
 	if(mapped)
 	{
-		vkUnmapMemory(device.device(), memory);
+		vkUnmapMemory(device.getDevice(), memory);
 		mapped = nullptr;
 	}
 }
@@ -129,7 +129,7 @@ VkResult Buffer::flush(VkDeviceSize size, VkDeviceSize offset)
 	mappedRange.memory = memory;
 	mappedRange.offset = offset;
 	mappedRange.size = size;
-	return vkFlushMappedMemoryRanges(device.device(), 1, &mappedRange);
+	return vkFlushMappedMemoryRanges(device.getDevice(), 1, &mappedRange);
 }
 
 /**
@@ -150,7 +150,7 @@ VkResult Buffer::invalidate(VkDeviceSize size, VkDeviceSize offset)
 	mappedRange.memory = memory;
 	mappedRange.offset = offset;
 	mappedRange.size = size;
-	return vkInvalidateMappedMemoryRanges(device.device(), 1, &mappedRange);
+	return vkInvalidateMappedMemoryRanges(device.getDevice(), 1, &mappedRange);
 }
 
 /**

@@ -25,7 +25,7 @@ GameObjectSystem::GameObjectSystem(Device& device, VkRenderPass renderPass, VkDe
 
 GameObjectSystem::~GameObjectSystem()
 {
-	vkDestroyPipelineLayout(device.device(), pipelineLayout, nullptr);
+	vkDestroyPipelineLayout(device.getDevice(), pipelineLayout, nullptr);
 }
 
 void GameObjectSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout)
@@ -43,7 +43,7 @@ void GameObjectSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayou
 	pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
 	pipelineLayoutInfo.pushConstantRangeCount = 1;
 	pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
-	if (vkCreatePipelineLayout(device.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
+	if (vkCreatePipelineLayout(device.getDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to create pipeline layout!");
 	}

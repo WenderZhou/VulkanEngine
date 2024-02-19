@@ -12,11 +12,11 @@ UI::UI(Window& window, Device& device, Renderer& renderer, std::unique_ptr<Descr
 
 	ImGui_ImplVulkan_InitInfo info{};
 	info.DescriptorPool = descriptorPool->getDescriptorPool();
-	info.Device = device.device();
+	info.Device = device.getDevice();
 	info.PhysicalDevice = device.getPhysicalDevice();
 	info.ImageCount = Swapchain::MAX_FRAMES_IN_FLIGHT;
 	info.Instance = device.getInstance();
-	info.Queue = device.graphicsQueue();
+	info.Queue = device.getGraphicsQueue();
 	info.MinImageCount = 2;
 
 	ImGui_ImplVulkan_Init(&info, renderer.getSwapchainRenderPass());
@@ -37,7 +37,13 @@ void UI::render(VkCommandBuffer commandBuffer)
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
-	ImGui::Text("Hello, world");
+	ImGui::Begin("Scene");
+	ImGui::Text("Scene");
+	ImGui::End();
+
+	ImGui::Begin("Inspector");
+	ImGui::Text("Inspector");
+	ImGui::End();
 
 	ImGui::Render();
 	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
