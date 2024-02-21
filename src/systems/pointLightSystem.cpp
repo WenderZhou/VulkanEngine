@@ -55,15 +55,15 @@ void PointLightSystem::createPipeline(VkRenderPass renderPass)
 {
 	assert(pipelineLayout != nullptr && "Can not create pipeline before pipeline layout");
 
-	PipelineConfigInfo pipelineConfigInfo{};
-	Pipeline::defaultPipelineConfigInfo(pipelineConfigInfo);
-	Pipeline::enableAlphaBlending(pipelineConfigInfo);
-	pipelineConfigInfo.attributeDescriptions.clear();
-	pipelineConfigInfo.bindingDescriptions.clear();
-	pipelineConfigInfo.renderPass = renderPass;
-	pipelineConfigInfo.pipelineLayout = pipelineLayout;
+	PipelineConfig pipelineConfig{};
+	Pipeline::defaultPipelineConfig(pipelineConfig);
+	Pipeline::enableAlphaBlending(pipelineConfig);
+	pipelineConfig.attributeDescriptions.clear();
+	pipelineConfig.bindingDescriptions.clear();
+	pipelineConfig.renderPass = renderPass;
+	pipelineConfig.pipelineLayout = pipelineLayout;
 
-	pipeline = std::make_unique<Pipeline>(device, "shaders/pointLight.vert.spv", "shaders/pointLight.frag.spv", pipelineConfigInfo);
+	pipeline = std::make_unique<Pipeline>(device, "shaders/pointLight.vert.spv", "shaders/pointLight.frag.spv", pipelineConfig);
 }
 
 void PointLightSystem::update(FrameInfo& frameInfo, GlobalUbo& ubo)

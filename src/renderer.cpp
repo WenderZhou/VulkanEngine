@@ -21,7 +21,7 @@ Renderer::~Renderer()
 
 void Renderer::createCommandBuffers()
 {
-	commandBuffers.resize(Swapchain::MAX_FRAMES_IN_FLIGHT);
+	commandBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
 
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -46,16 +46,16 @@ void Renderer::recreateSwapchain()
 
 	vkDeviceWaitIdle(device.getDevice());
 
-	if(swapchain == nullptr)
+	if(swapChain == nullptr)
 	{
-		swapchain = std::make_unique<Swapchain>(device, extent);
+		swapChain = std::make_unique<SwapChain>(device, extent);
 	}
 	else
 	{
-		std::shared_ptr<Swapchain> oldSwapchain = std::move(swapchain);
-		swapchain = std::make_unique<Swapchain>(device, extent, oldSwapchain);
+		std::shared_ptr<SwapChain> oldSwapchain = std::move(swapChain);
+		swapChain = std::make_unique<SwapChain>(device, extent, oldSwapchain);
 
-		if(!oldSwapchain->compareSwapFormats(*swapchain.get()))
+		if(!oldSwapchain->compareSwapFormats(*swapChain.get()))
 		{
 			throw std::runtime_error("Swap chain image(or depth) format has changed");
 		}
@@ -72,7 +72,7 @@ VkCommandBuffer Renderer::beginFrame()
 {
 	assert(!isFrameStarted && "Can't call beginFrame while already in progress");
 
-	VkResult result = swapchain->acquireNextImage(&currentImageIndex);
+	VkResult result = swapChain->acquireNextImage(&currentImageIndex);
 
 	if(result == VK_ERROR_OUT_OF_DATE_KHR)
 	{
@@ -112,7 +112,7 @@ void Renderer::endFrame()
 		throw std::runtime_error("failed to record command buffer");
 	}
 
-	VkResult result = swapchain->submitCommandBuffers(&commandBuffer, &currentImageIndex);
+	VkResult result = swapChain->submitCommandBuffers(&commandBuffer, &currentImageIndex);
 	if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window.wasWindowResized())
 	{
 		window.resetWindowResizedFlag();
@@ -124,7 +124,7 @@ void Renderer::endFrame()
 	}
 
 	isFrameStarted = false;
-	currentFrameIndex = (currentFrameIndex + 1) % Swapchain::MAX_FRAMES_IN_FLIGHT;
+	currentFrameIndex = (currentFrameIndex + 1) % SwapChain::MAX_FRAMES_IN_FLIGHT;
 }
 
 void Renderer::beginSwapchainRenderPass(VkCommandBuffer commandBuffer)
@@ -138,10 +138,10 @@ void Renderer::beginSwapchainRenderPass(VkCommandBuffer commandBuffer)
 
 	VkRenderPassBeginInfo renderPassInfo{};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassInfo.renderPass = swapchain->getRenderPass();
-	renderPassInfo.framebuffer = swapchain->getFrameBuffer(currentImageIndex);
+	renderPassInfo.renderPass = swapChain->getRenderPass();
+	renderPassInfo.framebuffer = swapChain->getFrameBuffer(currentImageIndex);
 	renderPassInfo.renderArea.offset = { 0,0 };
-	renderPassInfo.renderArea.extent = swapchain->getSwapChainExtent();
+	renderPassInfo.renderArea.extent = swapChain->getSwapChainExtent();
 	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 	renderPassInfo.pClearValues = clearValues.data();
 
@@ -150,11 +150,11 @@ void Renderer::beginSwapchainRenderPass(VkCommandBuffer commandBuffer)
 	VkViewport viewport{};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
-	viewport.width = static_cast<float>(swapchain->getSwapChainExtent().width);
-	viewport.height = static_cast<float>(swapchain->getSwapChainExtent().height);
+	viewport.width = static_cast<float>(swapChain->getSwapChainExtent().width);
+	viewport.height = static_cast<float>(swapChain->getSwapChainExtent().height);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
-	VkRect2D scissor{ {0, 0}, swapchain->getSwapChainExtent() };
+	VkRect2D scissor{ {0, 0}, swapChain->getSwapChainExtent() };
 	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 }

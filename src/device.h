@@ -51,7 +51,7 @@ public:
 	VkQueue getPresentQueue() { return m_presentQueue; }
 
 	VkCommandPool getCommandPool() { return commandPool; }
-	VkSurfaceKHR surface() { return m_surface; }
+	VkSurfaceKHR getSurface() { return m_surface; }
 
 	SwapChainSupportDetails getSwapChainSupportDetails() { return getSwapChainSupportDetails(m_physicalDevice); }
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
@@ -80,14 +80,22 @@ private:
 	void createCommandPool();
 
 	// helper functions
-	bool isSuitablePhysicalDevice(VkPhysicalDevice physicalDevice);
-	std::vector<const char*> getRequiredInstanceExtensions();
-	bool checkValidationLayerSupport();
-	QueueFamilyIndices getQueueFamilyIndices(VkPhysicalDevice device);
 	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
-	void hasGflwRequiredInstanceExtensions();
-	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
-	SwapChainSupportDetails getSwapChainSupportDetails(VkPhysicalDevice device);
+
+	QueueFamilyIndices getQueueFamilyIndices(VkPhysicalDevice physicalDevice);
+
+	bool isSuitablePhysicalDevice(VkPhysicalDevice physicalDevice);
+
+	std::vector<const char*> getRequiredInstanceExtensionNames();
+	void checkInstanceExtensionSupport();
+
+	std::vector<const char*> getRequiredDeviceExtensionNames();
+	bool checkDeviceExtensionSupport(VkPhysicalDevice physicalDevice);
+
+	const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
+	bool checkValidationLayerSupport();
+
+	SwapChainSupportDetails getSwapChainSupportDetails(VkPhysicalDevice physicalDevice);
 
 	VkInstance m_instance = VK_NULL_HANDLE;
 	
@@ -100,12 +108,9 @@ private:
 	Window& m_window;
 	VkCommandPool commandPool;
 
-	VkDebugUtilsMessengerEXT debugMessenger;
+	VkDebugUtilsMessengerEXT m_debugMessenger;
 
 	VkSurfaceKHR m_surface;
-
-	const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
-	const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 };
 
 }

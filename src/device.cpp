@@ -4,7 +4,6 @@
 #include <cstring>
 #include <iostream>
 #include <set>
-#include <unordered_set>
 
 namespace VulkanEngine
 {
@@ -57,7 +56,7 @@ Device::~Device()
 
 	if(enableValidationLayers)
 	{
-		DestroyDebugUtilsMessengerEXT(m_instance, debugMessenger, nullptr);
+		DestroyDebugUtilsMessengerEXT(m_instance, m_debugMessenger, nullptr);
 	}
 
 	vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
@@ -89,9 +88,9 @@ void Device::createInstance()
 	createInfo.pApplicationInfo = &appInfo;
 	createInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 
-	std::vector<const char*> extensions = getRequiredInstanceExtensions();
-	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
-	createInfo.ppEnabledExtensionNames = extensions.data();
+	std::vector<const char*> extensionNames = getRequiredInstanceExtensionNames();
+	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensionNames.size());
+	createInfo.ppEnabledExtensionNames = extensionNames.data();
 
 	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
 	if(enableValidationLayers)
@@ -113,7 +112,7 @@ void Device::createInstance()
 		throw std::runtime_error("failed to create instance!");
 	}
 
-	hasGflwRequiredInstanceExtensions();
+	checkInstanceExtensionSupport();
 }
 
 bool Device::isSuitablePhysicalDevice(VkPhysicalDevice physicalDevice)
@@ -125,8 +124,8 @@ bool Device::isSuitablePhysicalDevice(VkPhysicalDevice physicalDevice)
 	if(!checkDeviceExtensionSupport(physicalDevice))
 		return false;
 
-	SwapChainSupportDetails swapChainSupport = getSwapChainSupportDetails(physicalDevice);
-	if(swapChainSupport.formats.empty() || swapChainSupport.presentModes.empty())
+	SwapChainSupportDetails details = getSwapChainSupportDetails(physicalDevice);
+	if(details.formats.empty() || details.presentModes.empty())
 		return false;
 
 	VkPhysicalDeviceProperties properties;
@@ -196,8 +195,11 @@ void Device::createLogicalDevice()
 
 	createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 	createInfo.pQueueCreateInfos = queueCreateInfos.data();
+
+	std::vector<const char*> deviceExtensions = getRequiredDeviceExtensionNames();
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
 	createInfo.ppEnabledExtensionNames = deviceExtensions.data();
+
 	createInfo.pEnabledFeatures = &enabledFeatures;
 
 	// might not really be necessary anymore because device specific validation layers have been deprecated
@@ -258,7 +260,7 @@ void Device::setupDebugMessenger()
 	if(!enableValidationLayers) return;
 	VkDebugUtilsMessengerCreateInfoEXT createInfo;
 	populateDebugMessengerCreateInfo(createInfo);
-	if(CreateDebugUtilsMessengerEXT(m_instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS)
+	if(CreateDebugUtilsMessengerEXT(m_instance, &createInfo, nullptr, &m_debugMessenger) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to set up debug messenger!");
 	}
@@ -294,52 +296,57 @@ bool Device::checkValidationLayerSupport()
 	return true;
 }
 
-std::vector<const char*> Device::getRequiredInstanceExtensions()
+std::vector<const char*> Device::getRequiredInstanceExtensionNames()
 {
-	std::vector<const char*> extensions;
+	std::vector<const char*> names;
 
 	uint32_t glfwExtensionCount = 0;
-	const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-	for(int i = 0; i < glfwExtensionCount; ++i)
+	const char** glfwExtensionsNames = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+	for(uint32_t i = 0; i < glfwExtensionCount; ++i)
 	{
-		extensions.push_back(glfwExtensions[i]);
+		names.push_back(glfwExtensionsNames[i]);
 	}
 
 	if(enableValidationLayers)
 	{
-		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+		names.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 	}
 
-	extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+	names.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 
-	return extensions;
+	return names;
 }
 
-void Device::hasGflwRequiredInstanceExtensions()
+void Device::checkInstanceExtensionSupport()
 {
 	uint32_t extensionCount = 0;
 	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-	std::vector<VkExtensionProperties> extensions(extensionCount);
-	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
 
-	std::cout << "available extensions:" << std::endl;
-	std::unordered_set<std::string> available;
-	for(const auto& extension : extensions)
+	std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, availableExtensions.data());
+
+	std::set<std::string> availableExtensionNames;
+	for(const auto& extension : availableExtensions)
 	{
-		std::cout << "\t" << extension.extensionName << std::endl;
-		available.insert(extension.extensionName);
+		availableExtensionNames.insert(extension.extensionName);
 	}
 
-	std::cout << "required extensions:" << std::endl;
-	auto requiredExtensions = getRequiredInstanceExtensions();
-	for(const auto& required : requiredExtensions)
+	for(const auto& name : getRequiredInstanceExtensionNames())
 	{
-		std::cout << "\t" << required << std::endl;
-		if(available.find(required) == available.end())
+		if(availableExtensionNames.find(name) == availableExtensionNames.end())
 		{
 			throw std::runtime_error("Missing required glfw extension");
 		}
 	}
+}
+
+std::vector<const char*> Device::getRequiredDeviceExtensionNames()
+{
+	std::vector<const char*> names;
+
+	names.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
+	return names;
 }
 
 bool Device::checkDeviceExtensionSupport(VkPhysicalDevice physicalDevice)
@@ -350,14 +357,18 @@ bool Device::checkDeviceExtensionSupport(VkPhysicalDevice physicalDevice)
 	std::vector<VkExtensionProperties> availableExtensions(extensionCount);
 	vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, availableExtensions.data());
 
-	std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
+	std::set<std::string> requiredExtensionsNames;
+	for(const auto& name : getRequiredDeviceExtensionNames())
+	{
+		requiredExtensionsNames.insert(name);
+	}
 
 	for(const auto& extension : availableExtensions)
 	{
-		requiredExtensions.erase(extension.extensionName);
+		requiredExtensionsNames.erase(extension.extensionName);
 	}
 
-	return requiredExtensions.empty();
+	return requiredExtensionsNames.empty();
 }
 
 QueueFamilyIndices Device::getQueueFamilyIndices(VkPhysicalDevice physicalDevice)
