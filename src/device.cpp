@@ -51,7 +51,7 @@ Device::Device(Window& window) : m_window{ window }
 
 Device::~Device()
 {
-	vkDestroyCommandPool(m_device, commandPool, nullptr);
+	vkDestroyCommandPool(m_device, m_commandPool, nullptr);
 	vkDestroyDevice(m_device, nullptr);
 
 	if(enableValidationLayers)
@@ -231,7 +231,7 @@ void Device::createCommandPool()
 	poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
 	poolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-	if(vkCreateCommandPool(m_device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS)
+	if(vkCreateCommandPool(m_device, &poolInfo, nullptr, &m_commandPool) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to create command pool!");
 	}
@@ -499,7 +499,7 @@ VkCommandBuffer Device::beginSingleTimeCommands()
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandPool = commandPool;
+	allocInfo.commandPool = m_commandPool;
 	allocInfo.commandBufferCount = 1;
 
 	VkCommandBuffer commandBuffer;
@@ -525,7 +525,7 @@ void Device::endSingleTimeCommands(VkCommandBuffer commandBuffer)
 	vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
 	vkQueueWaitIdle(m_graphicsQueue);
 
-	vkFreeCommandBuffers(m_device, commandPool, 1, &commandBuffer);
+	vkFreeCommandBuffers(m_device, m_commandPool, 1, &commandBuffer);
 }
 
 void Device::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
@@ -562,7 +562,12 @@ void Device::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, u
 	endSingleTimeCommands(commandBuffer);
 }
 
-void Device::createImageWithInfo(const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
+void Device::freeMemory(VkDeviceMemory memory)
+{
+	vkFreeMemory(m_device, memory, nullptr);
+}
+
+void Device::createImage(const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
 {
 	if(vkCreateImage(m_device, &imageInfo, nullptr, &image) != VK_SUCCESS)
 	{
@@ -586,6 +591,76 @@ void Device::createImageWithInfo(const VkImageCreateInfo& imageInfo, VkMemoryPro
 	{
 		throw std::runtime_error("failed to bind image memory!");
 	}
+}
+
+void Device::destroyImage(VkImage image)
+{
+	vkDestroyImage(m_device, image, nullptr);
+}
+
+void Device::createImageView(const VkImageViewCreateInfo& createInfo, VkImageView& imageView)
+{
+	if(vkCreateImageView(m_device, &createInfo, nullptr, &imageView) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create texture image view!");
+	}
+}
+
+void Device::destroyImageView(VkImageView imageView)
+{
+	vkDestroyImageView(m_device, imageView, nullptr);
+}
+
+void Device::createShaderModule(const VkShaderModuleCreateInfo& createInfo, VkShaderModule& shaderModule)
+{
+	if(vkCreateShaderModule(m_device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
+	{
+		throw std::runtime_error("fail to create shader module");
+	}
+}
+
+void Device::destroyShaderModule(VkShaderModule shaderModule)
+{
+	vkDestroyShaderModule(m_device, shaderModule, nullptr);
+}
+
+void Device::createGraphicsPipeline(const VkGraphicsPipelineCreateInfo& createInfo, VkPipeline& pipeline)
+{
+	if(vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &createInfo, nullptr, &pipeline) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create graphics pipeline");
+	}
+}
+
+void Device::destroyPipeline(VkPipeline pipeline)
+{
+	vkDestroyPipeline(m_device, pipeline, nullptr);
+}
+
+void Device::createFramebuffer(const VkFramebufferCreateInfo& createInfo, VkFramebuffer& framebuffer)
+{
+	if(vkCreateFramebuffer(m_device, &createInfo, nullptr, &framebuffer) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create framebuffer!");
+	}
+}
+
+void Device::destroyFramebuffer(VkFramebuffer framebuffer)
+{
+	vkDestroyFramebuffer(m_device, framebuffer, nullptr);
+}
+
+void Device::createRenderPass(const VkRenderPassCreateInfo& createInfo, VkRenderPass& renderPass)
+{
+	if(vkCreateRenderPass(m_device, &createInfo, nullptr, &renderPass) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create render pass!");
+	}
+}
+
+void Device::destroyRenderPass(VkRenderPass renderPass)
+{
+	vkDestroyRenderPass(m_device, renderPass, nullptr);
 }
 
 }

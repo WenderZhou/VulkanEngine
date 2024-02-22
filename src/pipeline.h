@@ -17,18 +17,9 @@ struct PipelineConfig
 	PipelineConfig(const PipelineConfig&) = delete;
 	PipelineConfig& operator=(const PipelineConfig&) = delete;
 
-	std::vector<VkVertexInputBindingDescription> bindingDescriptions{};
-	std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
+	std::vector<VkVertexInputBindingDescription> bindingDescriptions;
+	std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
 
-	VkPipelineViewportStateCreateInfo		viewportState;
-	VkPipelineInputAssemblyStateCreateInfo	inputAssemblyState;
-	VkPipelineRasterizationStateCreateInfo	rasterizationState;
-	VkPipelineMultisampleStateCreateInfo	multisampleState;
-	VkPipelineColorBlendAttachmentState		colorBlendAttachment;
-	VkPipelineColorBlendStateCreateInfo		colorBlendState;
-	VkPipelineDepthStencilStateCreateInfo	depthStencilState;
-	std::vector<VkDynamicState>				dynamicStates;
-	VkPipelineDynamicStateCreateInfo		dynamicState;
 	VkPipelineLayout pipelineLayout = nullptr;
 	VkRenderPass renderPass = nullptr;
 	uint32_t subpass = 0;
@@ -44,15 +35,13 @@ public:
 	Pipeline& operator=(const Pipeline&) = delete;
 
 	void bind(VkCommandBuffer commandBuffer);
-	static void defaultPipelineConfig(PipelineConfig& config);
-	static void enableAlphaBlending(PipelineConfig& config);
 	
 private:
 
 	void createGraphicsPipeline(const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfig& config);
 
 	Device& m_device;
-	VkPipeline graphicsPipeline;
+	VkPipeline m_graphicsPipeline;
 
 	std::unique_ptr<Shader> m_vertShader;
 	std::unique_ptr<Shader> m_fragShader;

@@ -17,14 +17,14 @@ public:
 	static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
 	SwapChain(Device& deviceRef, VkExtent2D windowExtent);
-	SwapChain(Device& deviceRef, VkExtent2D windowExtent, std::shared_ptr<SwapChain> previous);
+	SwapChain(Device& deviceRef, VkExtent2D windowExtent, std::shared_ptr<SwapChain> pOldSwapChain);
 	~SwapChain();
 
 	SwapChain(const SwapChain&) = delete;
 	SwapChain& operator=(const SwapChain&) = delete;
 
-	VkFramebuffer getFrameBuffer(int index) { return swapChainFramebuffers[index]; }
-	VkRenderPass getRenderPass() { return renderPass; }
+	VkFramebuffer getFrameBuffer(int index) { return m_swapChainFramebuffers[index]; }
+	VkRenderPass getRenderPass() { return m_renderPass; }
 	VkImageView getImageView(int index) { return m_swapChainImageViews[index]; }
 	VkFormat getSwapChainImageFormat() { return m_swapChainImageFormat; }
 	VkExtent2D getSwapChainExtent() { return m_swapChainExtent; }
@@ -50,18 +50,16 @@ private:
 	void createSyncObjects();
 
 	// Helper functions
-	VkSurfaceFormatKHR chooseSwapSurfaceFormat(
-		const std::vector<VkSurfaceFormatKHR>& availableFormats);
-	VkPresentModeKHR chooseSwapPresentMode(
-		const std::vector<VkPresentModeKHR>& availablePresentModes);
+	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
+	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
 	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 
 	VkFormat m_swapChainImageFormat;
 	VkFormat m_swapChainDepthFormat;
 	VkExtent2D m_swapChainExtent;
 
-	std::vector<VkFramebuffer> swapChainFramebuffers;
-	VkRenderPass renderPass;
+	std::vector<VkFramebuffer> m_swapChainFramebuffers;
+	VkRenderPass m_renderPass;
 
 	std::vector<VkImage> m_swapChainImages;
 	std::vector<VkImage> depthImages;
@@ -73,7 +71,7 @@ private:
 	VkExtent2D m_windowExtent;
 
 	VkSwapchainKHR m_swapChain;
-	std::shared_ptr<SwapChain> oldSwapchain;
+	std::shared_ptr<SwapChain> m_pOldSwapchain;
 
 	std::vector<VkSemaphore> imageAvailableSemaphores;
 	std::vector<VkSemaphore> renderFinishedSemaphores;

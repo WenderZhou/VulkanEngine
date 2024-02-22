@@ -1,4 +1,5 @@
 #include "gameObjectSystem.h"
+#include "model.h"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -54,7 +55,8 @@ void GameObjectSystem::createPipeline(VkRenderPass renderPass)
 	assert(pipelineLayout != nullptr && "Can not create pipeline before pipeline layout");
 
 	PipelineConfig pipelineConfig{};
-	Pipeline::defaultPipelineConfig(pipelineConfig);
+	pipelineConfig.bindingDescriptions = Model::Vertex::getBindingDescriptions();
+	pipelineConfig.attributeDescriptions = Model::Vertex::getAttributeDescriptions();
 	pipelineConfig.renderPass = renderPass;
 	pipelineConfig.pipelineLayout = pipelineLayout;
 

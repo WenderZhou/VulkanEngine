@@ -50,7 +50,7 @@ public:
 	VkQueue getGraphicsQueue() { return m_graphicsQueue; }
 	VkQueue getPresentQueue() { return m_presentQueue; }
 
-	VkCommandPool getCommandPool() { return commandPool; }
+	VkCommandPool getCommandPool() { return m_commandPool; }
 	VkSurfaceKHR getSurface() { return m_surface; }
 
 	SwapChainSupportDetails getSwapChainSupportDetails() { return getSwapChainSupportDetails(m_physicalDevice); }
@@ -65,7 +65,25 @@ public:
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layerCount);
 
-	void createImageWithInfo(const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+	void freeMemory(VkDeviceMemory memory);
+
+	void createImage(const VkImageCreateInfo& createInfo, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+	void destroyImage(VkImage image);
+
+	void createImageView(const VkImageViewCreateInfo& createInfo, VkImageView& imageView);
+	void destroyImageView(VkImageView imageView);
+
+	void createShaderModule(const VkShaderModuleCreateInfo& createInfo, VkShaderModule& shaderModule);
+	void destroyShaderModule(VkShaderModule shaderModule);
+
+	void createGraphicsPipeline(const VkGraphicsPipelineCreateInfo& createInfo, VkPipeline& pipeline);
+	void destroyPipeline(VkPipeline pipeline);
+
+	void createFramebuffer(const VkFramebufferCreateInfo& createInfo, VkFramebuffer& framebuffer);
+	void destroyFramebuffer(VkFramebuffer framebuffer);
+
+	void createRenderPass(const VkRenderPassCreateInfo& createInfo, VkRenderPass& renderPass);
+	void destroyRenderPass(VkRenderPass renderPass);
 
 	VkPhysicalDeviceProperties properties;
 
@@ -106,7 +124,7 @@ private:
 	VkQueue m_presentQueue;
 
 	Window& m_window;
-	VkCommandPool commandPool;
+	VkCommandPool m_commandPool;
 
 	VkDebugUtilsMessengerEXT m_debugMessenger;
 

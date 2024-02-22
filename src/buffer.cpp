@@ -54,7 +54,7 @@ Buffer::~Buffer()
 {
 	unmap();
 	vkDestroyBuffer(device.getDevice(), buffer, nullptr);
-	vkFreeMemory(device.getDevice(), memory, nullptr);
+	device.freeMemory(memory);
 }
 
 /**

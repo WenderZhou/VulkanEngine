@@ -56,10 +56,6 @@ void PointLightSystem::createPipeline(VkRenderPass renderPass)
 	assert(pipelineLayout != nullptr && "Can not create pipeline before pipeline layout");
 
 	PipelineConfig pipelineConfig{};
-	Pipeline::defaultPipelineConfig(pipelineConfig);
-	Pipeline::enableAlphaBlending(pipelineConfig);
-	pipelineConfig.attributeDescriptions.clear();
-	pipelineConfig.bindingDescriptions.clear();
 	pipelineConfig.renderPass = renderPass;
 	pipelineConfig.pipelineLayout = pipelineLayout;
 
