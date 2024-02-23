@@ -20,8 +20,8 @@ public:
 	Renderer(const Renderer&) = delete;
 	Renderer& operator=(const Renderer&) = delete;
 
-	VkRenderPass getSwapchainRenderPass() const { return swapChain->getRenderPass(); }
-	float getAspectRatio() const { return swapChain->extentAspectRatio(); }
+	VkRenderPass getSwapchainRenderPass() const { return m_pSwapChain->getRenderPass(); }
+	float getAspectRatio() const { return m_pSwapChain->extentAspectRatio(); }
 	bool isFrameInProgress() const { return isFrameStarted; }
 
 	VkCommandBuffer getCurrentCommandBuffer() const 
@@ -49,7 +49,7 @@ private:
 	Window& window;
 	Device& device;
 
-	std::unique_ptr<SwapChain> swapChain;
+	std::unique_ptr<SwapChain> m_pSwapChain;
 	std::vector<VkCommandBuffer> commandBuffers;
 
 	uint32_t currentImageIndex;

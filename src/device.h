@@ -65,6 +65,7 @@ public:
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layerCount);
 
+	void allocateMemory(const VkMemoryAllocateInfo& allocateInfo, VkDeviceMemory& memory);
 	void freeMemory(VkDeviceMemory memory);
 
 	void createImage(const VkImageCreateInfo& createInfo, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
@@ -84,6 +85,12 @@ public:
 
 	void createRenderPass(const VkRenderPassCreateInfo& createInfo, VkRenderPass& renderPass);
 	void destroyRenderPass(VkRenderPass renderPass);
+
+	void createCommandPool(const VkCommandPoolCreateInfo& createInfo, VkCommandPool& commandPool);
+	void destroyCommandPool(VkCommandPool commandPool);
+
+	void allocateCommandBuffers(const VkCommandBufferAllocateInfo& allocateInfo, VkCommandBuffer* pCommandBuffers);
+	void freeCommandBuffers(VkCommandPool commandPool, uint32_t commandBufferCount, const VkCommandBuffer* pCommandBuffers);
 
 	VkPhysicalDeviceProperties properties;
 
@@ -116,7 +123,7 @@ private:
 	SwapChainSupportDetails getSwapChainSupportDetails(VkPhysicalDevice physicalDevice);
 
 	VkInstance m_instance = VK_NULL_HANDLE;
-	
+
 	VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;	// physical device handle
 	VkDevice m_device = VK_NULL_HANDLE;					// logical device handle
 

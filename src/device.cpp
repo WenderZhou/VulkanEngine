@@ -51,7 +51,7 @@ Device::Device(Window& window) : m_window{ window }
 
 Device::~Device()
 {
-	vkDestroyCommandPool(m_device, m_commandPool, nullptr);
+	destroyCommandPool(m_commandPool);
 	vkDestroyDevice(m_device, nullptr);
 
 	if(enableValidationLayers)
@@ -226,15 +226,12 @@ void Device::createCommandPool()
 {
 	QueueFamilyIndices queueFamilyIndices = getQueueFamilyIndices();
 
-	VkCommandPoolCreateInfo poolInfo = {};
-	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
-	poolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	VkCommandPoolCreateInfo createInfo = {};
+	createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	createInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+	createInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-	if(vkCreateCommandPool(m_device, &poolInfo, nullptr, &m_commandPool) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to create command pool!");
-	}
+	createCommandPool(createInfo, m_commandPool);
 }
 
 void Device::createSurface()
@@ -562,6 +559,14 @@ void Device::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, u
 	endSingleTimeCommands(commandBuffer);
 }
 
+void Device::allocateMemory(const VkMemoryAllocateInfo& allocateInfo, VkDeviceMemory& memory)
+{
+	if(vkAllocateMemory(m_device, &allocateInfo, nullptr, &memory) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to allocate memory!");
+	}
+}
+
 void Device::freeMemory(VkDeviceMemory memory)
 {
 	vkFreeMemory(m_device, memory, nullptr);
@@ -661,6 +666,32 @@ void Device::createRenderPass(const VkRenderPassCreateInfo& createInfo, VkRender
 void Device::destroyRenderPass(VkRenderPass renderPass)
 {
 	vkDestroyRenderPass(m_device, renderPass, nullptr);
+}
+
+void Device::createCommandPool(const VkCommandPoolCreateInfo& createInfo, VkCommandPool& commandPool)
+{
+	if(vkCreateCommandPool(m_device, &createInfo, nullptr, &commandPool) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create command pool!");
+	}
+}
+
+void Device::destroyCommandPool(VkCommandPool commandPool)
+{
+	vkDestroyCommandPool(m_device, commandPool, nullptr);
+}
+
+void Device::allocateCommandBuffers(const VkCommandBufferAllocateInfo& allocateInfo, VkCommandBuffer* pCommandBuffers)
+{
+	if(vkAllocateCommandBuffers(m_device, &allocateInfo, pCommandBuffers) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create command buffer");
+	}
+}
+
+void Device::freeCommandBuffers(VkCommandPool commandPool, uint32_t commandBufferCount, const VkCommandBuffer* pCommandBuffers)
+{
+
 }
 
 }

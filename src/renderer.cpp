@@ -29,10 +29,7 @@ void Renderer::createCommandBuffers()
 	allocInfo.commandPool = device.getCommandPool();
 	allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
 
-	if(vkAllocateCommandBuffers(device.getDevice(), &allocInfo, commandBuffers.data()) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to create command buffer");
-	}
+	device.allocateCommandBuffers(allocInfo, commandBuffers.data());
 }
 
 void Renderer::recreateSwapchain()
@@ -44,18 +41,18 @@ void Renderer::recreateSwapchain()
 		glfwWaitEvents();
 	}
 
-	vkDeviceWaitIdle(device.getDevice());
+	device.waitIdle();
 
-	if(swapChain == nullptr)
+	if(m_pSwapChain == nullptr)
 	{
-		swapChain = std::make_unique<SwapChain>(device, extent);
+		m_pSwapChain = std::make_unique<SwapChain>(device, extent);
 	}
 	else
 	{
-		std::shared_ptr<SwapChain> oldSwapchain = std::move(swapChain);
-		swapChain = std::make_unique<SwapChain>(device, extent, oldSwapchain);
+		std::shared_ptr<SwapChain> oldSwapchain = std::move(m_pSwapChain);
+		m_pSwapChain = std::make_unique<SwapChain>(device, extent, oldSwapchain);
 
-		if(!oldSwapchain->compareSwapFormats(*swapChain.get()))
+		if(!oldSwapchain->compareSwapFormats(*m_pSwapChain.get()))
 		{
 			throw std::runtime_error("Swap chain image(or depth) format has changed");
 		}
@@ -72,7 +69,7 @@ VkCommandBuffer Renderer::beginFrame()
 {
 	assert(!isFrameStarted && "Can't call beginFrame while already in progress");
 
-	VkResult result = swapChain->acquireNextImage(&currentImageIndex);
+	VkResult result = m_pSwapChain->acquireNextImage(&currentImageIndex);
 
 	if(result == VK_ERROR_OUT_OF_DATE_KHR)
 	{
@@ -112,7 +109,7 @@ void Renderer::endFrame()
 		throw std::runtime_error("failed to record command buffer");
 	}
 
-	VkResult result = swapChain->submitCommandBuffers(&commandBuffer, &currentImageIndex);
+	VkResult result = m_pSwapChain->submitCommandBuffers(&commandBuffer, &currentImageIndex);
 	if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window.wasWindowResized())
 	{
 		window.resetWindowResizedFlag();
@@ -136,25 +133,25 @@ void Renderer::beginSwapchainRenderPass(VkCommandBuffer commandBuffer)
 	clearValues[0].color = { 0.1f, 0.1f, 0.1f, 1.0f };
 	clearValues[1].depthStencil = { 1.0f, 0 };
 
-	VkRenderPassBeginInfo renderPassInfo{};
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassInfo.renderPass = swapChain->getRenderPass();
-	renderPassInfo.framebuffer = swapChain->getFrameBuffer(currentImageIndex);
-	renderPassInfo.renderArea.offset = { 0,0 };
-	renderPassInfo.renderArea.extent = swapChain->getSwapChainExtent();
-	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-	renderPassInfo.pClearValues = clearValues.data();
+	VkRenderPassBeginInfo beginInfo{};
+	beginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	beginInfo.renderPass = m_pSwapChain->getRenderPass();
+	beginInfo.framebuffer = m_pSwapChain->getFrameBuffer(currentImageIndex);
+	beginInfo.renderArea.offset = { 0,0 };
+	beginInfo.renderArea.extent = m_pSwapChain->getSwapChainExtent();
+	beginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+	beginInfo.pClearValues = clearValues.data();
 
-	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdBeginRenderPass(commandBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	VkViewport viewport{};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
-	viewport.width = static_cast<float>(swapChain->getSwapChainExtent().width);
-	viewport.height = static_cast<float>(swapChain->getSwapChainExtent().height);
+	viewport.width = static_cast<float>(m_pSwapChain->getSwapChainExtent().width);
+	viewport.height = static_cast<float>(m_pSwapChain->getSwapChainExtent().height);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
-	VkRect2D scissor{ {0, 0}, swapChain->getSwapChainExtent() };
+	VkRect2D scissor{ {0, 0}, m_pSwapChain->getSwapChainExtent() };
 	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 }
