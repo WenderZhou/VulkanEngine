@@ -68,6 +68,14 @@ public:
 	void allocateMemory(const VkMemoryAllocateInfo& allocateInfo, VkDeviceMemory& memory);
 	void freeMemory(VkDeviceMemory memory);
 
+	void createFence(const VkFenceCreateInfo& createInfo, VkFence& fence);
+	void destroyFence(VkFence fence);
+	void resetFence(VkFence fence);
+	void waitForFence(VkFence fence);
+
+	void createSemaphore(const VkSemaphoreCreateInfo& createInfo, VkSemaphore& semaphore);
+	void destroySemaphore(VkSemaphore semaphore);
+
 	void createImage(const VkImageCreateInfo& createInfo, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
 	void destroyImage(VkImage image);
 
@@ -80,6 +88,9 @@ public:
 	void createGraphicsPipeline(const VkGraphicsPipelineCreateInfo& createInfo, VkPipeline& pipeline);
 	void destroyPipeline(VkPipeline pipeline);
 
+	void createPipelineLayout(const VkPipelineLayoutCreateInfo& createInfo, VkPipelineLayout& pipelineLayout);
+	void destroyPipelineLayout(VkPipelineLayout pipelineLayout);
+
 	void createFramebuffer(const VkFramebufferCreateInfo& createInfo, VkFramebuffer& framebuffer);
 	void destroyFramebuffer(VkFramebuffer framebuffer);
 
@@ -89,8 +100,8 @@ public:
 	void createCommandPool(const VkCommandPoolCreateInfo& createInfo, VkCommandPool& commandPool);
 	void destroyCommandPool(VkCommandPool commandPool);
 
-	void allocateCommandBuffers(const VkCommandBufferAllocateInfo& allocateInfo, VkCommandBuffer* pCommandBuffers);
-	void freeCommandBuffers(VkCommandPool commandPool, uint32_t commandBufferCount, const VkCommandBuffer* pCommandBuffers);
+	void allocateCommandBuffers(uint32_t commandBufferCount, VkCommandBuffer* pCommandBuffers);
+	void freeCommandBuffers(uint32_t commandBufferCount, VkCommandBuffer* pCommandBuffers);
 
 	VkPhysicalDeviceProperties properties;
 

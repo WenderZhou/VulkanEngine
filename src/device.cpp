@@ -572,6 +572,42 @@ void Device::freeMemory(VkDeviceMemory memory)
 	vkFreeMemory(m_device, memory, nullptr);
 }
 
+void Device::createFence(const VkFenceCreateInfo& createInfo, VkFence& fence)
+{
+	if(vkCreateFence(m_device, &createInfo, nullptr, &fence) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create fence!");
+	}
+}
+
+void Device::destroyFence(VkFence fence)
+{
+	vkDestroyFence(m_device, fence, nullptr);
+}
+
+void Device::resetFence(VkFence fence)
+{
+	vkResetFences(m_device, 1, &fence);
+}
+
+void Device::waitForFence(VkFence fence)
+{
+	vkWaitForFences(m_device, 1, &fence, VK_TRUE, UINT64_MAX);
+}
+
+void Device::createSemaphore(const VkSemaphoreCreateInfo& createInfo, VkSemaphore& semaphore)
+{
+	if(vkCreateSemaphore(m_device, &createInfo, nullptr, &semaphore) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create semaphore!");
+	}
+}
+
+void Device::destroySemaphore(VkSemaphore semaphore)
+{
+	vkDestroySemaphore(m_device, semaphore, nullptr);
+}
+
 void Device::createImage(const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
 {
 	if(vkCreateImage(m_device, &imageInfo, nullptr, &image) != VK_SUCCESS)
@@ -642,6 +678,19 @@ void Device::destroyPipeline(VkPipeline pipeline)
 	vkDestroyPipeline(m_device, pipeline, nullptr);
 }
 
+void Device::createPipelineLayout(const VkPipelineLayoutCreateInfo& createInfo, VkPipelineLayout& pipelineLayout)
+{
+	if (vkCreatePipelineLayout(m_device, &createInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create pipeline layout!");
+	}
+}
+
+void Device::destroyPipelineLayout(VkPipelineLayout pipelineLayout)
+{
+	vkDestroyPipelineLayout(m_device, pipelineLayout, nullptr);
+}
+
 void Device::createFramebuffer(const VkFramebufferCreateInfo& createInfo, VkFramebuffer& framebuffer)
 {
 	if(vkCreateFramebuffer(m_device, &createInfo, nullptr, &framebuffer) != VK_SUCCESS)
@@ -681,17 +730,23 @@ void Device::destroyCommandPool(VkCommandPool commandPool)
 	vkDestroyCommandPool(m_device, commandPool, nullptr);
 }
 
-void Device::allocateCommandBuffers(const VkCommandBufferAllocateInfo& allocateInfo, VkCommandBuffer* pCommandBuffers)
+void Device::allocateCommandBuffers(uint32_t commandBufferCount, VkCommandBuffer* pCommandBuffers)
 {
-	if(vkAllocateCommandBuffers(m_device, &allocateInfo, pCommandBuffers) != VK_SUCCESS)
+	VkCommandBufferAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandPool = m_commandPool;
+	allocInfo.commandBufferCount = commandBufferCount;
+
+	if(vkAllocateCommandBuffers(m_device, &allocInfo, pCommandBuffers) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to create command buffer");
 	}
 }
 
-void Device::freeCommandBuffers(VkCommandPool commandPool, uint32_t commandBufferCount, const VkCommandBuffer* pCommandBuffers)
+void Device::freeCommandBuffers(uint32_t commandBufferCount, VkCommandBuffer* pCommandBuffers)
 {
-
+	vkFreeCommandBuffers(m_device, m_commandPool, commandBufferCount, pCommandBuffers);
 }
 
 }

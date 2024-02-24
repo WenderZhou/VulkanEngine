@@ -27,7 +27,7 @@ public:
 	VkCommandBuffer getCurrentCommandBuffer() const 
 	{
 		assert(isFrameStarted && "Cannot get command buffer when frame not in progress");
-		return commandBuffers[currentFrameIndex];
+		return m_commandBuffers[currentFrameIndex];
 	}
 
 	int getFrameIndex() const
@@ -50,7 +50,7 @@ private:
 	Device& device;
 
 	std::unique_ptr<SwapChain> m_pSwapChain;
-	std::vector<VkCommandBuffer> commandBuffers;
+	std::vector<VkCommandBuffer> m_commandBuffers;
 
 	uint32_t currentImageIndex;
 	int currentFrameIndex;

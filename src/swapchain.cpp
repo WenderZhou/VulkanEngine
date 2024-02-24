@@ -67,19 +67,19 @@ SwapChain::~SwapChain()
 	// cleanup synchronization objects
 	for(size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 	{
-		vkDestroySemaphore(m_device.getDevice(), renderFinishedSemaphores[i], nullptr);
-		vkDestroySemaphore(m_device.getDevice(), imageAvailableSemaphores[i], nullptr);
-		vkDestroyFence(m_device.getDevice(), inFlightFences[i], nullptr);
+		m_device.destroySemaphore(m_renderFinishedSemaphores[i]);
+		m_device.destroySemaphore(m_imageAvailableSemaphores[i]);
+		m_device.destroyFence(m_inFlightFences[i]);
 	}
 }
 
 VkResult SwapChain::acquireNextImage(uint32_t* imageIndex)
 {
-	vkWaitForFences(m_device.getDevice(), 1, &inFlightFences[currentFrame], VK_TRUE, std::numeric_limits<uint64_t>::max());
+	m_device.waitForFence(m_inFlightFences[currentFrame]);
 
 	VkResult result = vkAcquireNextImageKHR(m_device.getDevice(),
 		m_swapChain, std::numeric_limits<uint64_t>::max(),
-		imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, imageIndex);
+		m_imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, imageIndex);
 
 	return result;
 }
@@ -88,14 +88,14 @@ VkResult SwapChain::submitCommandBuffers(const VkCommandBuffer* buffers, uint32_
 {
 	if(imagesInFlight[*imageIndex] != VK_NULL_HANDLE)
 	{
-		vkWaitForFences(m_device.getDevice(), 1, &imagesInFlight[*imageIndex], VK_TRUE, UINT64_MAX);
+		m_device.waitForFence(imagesInFlight[*imageIndex]);
 	}
-	imagesInFlight[*imageIndex] = inFlightFences[currentFrame];
+	imagesInFlight[*imageIndex] = m_inFlightFences[currentFrame];
 
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-	VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
+	VkSemaphore waitSemaphores[] = { m_imageAvailableSemaphores[currentFrame] };
 	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 	submitInfo.waitSemaphoreCount = 1;
 	submitInfo.pWaitSemaphores = waitSemaphores;
@@ -104,12 +104,12 @@ VkResult SwapChain::submitCommandBuffers(const VkCommandBuffer* buffers, uint32_
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = buffers;
 
-	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame] };
+	VkSemaphore signalSemaphores[] = { m_renderFinishedSemaphores[currentFrame] };
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
-	vkResetFences(m_device.getDevice(), 1, &inFlightFences[currentFrame]);
-	if(vkQueueSubmit(m_device.getGraphicsQueue(), 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS)
+	m_device.resetFence(m_inFlightFences[currentFrame]);
+	if(vkQueueSubmit(m_device.getGraphicsQueue(), 1, &submitInfo, m_inFlightFences[currentFrame]) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to submit draw command buffer!");
 	}
@@ -340,9 +340,9 @@ void SwapChain::createDepthResources()
 
 void SwapChain::createSyncObjects()
 {
-	imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-	renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-	inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+	m_imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+	m_renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+	m_inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
 	imagesInFlight.resize(m_swapChainImages.size(), VK_NULL_HANDLE);
 
 	VkSemaphoreCreateInfo semaphoreInfo = {};
@@ -354,12 +354,10 @@ void SwapChain::createSyncObjects()
 
 	for(size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 	{
-		if(vkCreateSemaphore(m_device.getDevice(), &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
-			vkCreateSemaphore(m_device.getDevice(), &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
-			vkCreateFence(m_device.getDevice(), &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to create synchronization objects for a frame!");
-		}
+		m_device.createSemaphore(semaphoreInfo, m_imageAvailableSemaphores[i]);
+		m_device.createSemaphore(semaphoreInfo, m_renderFinishedSemaphores[i]);
+
+		m_device.createFence(fenceInfo, m_inFlightFences[i]);
 	}
 }
 

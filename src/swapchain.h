@@ -73,9 +73,9 @@ private:
 	VkSwapchainKHR m_swapChain;
 	std::shared_ptr<SwapChain> m_pOldSwapchain;
 
-	std::vector<VkSemaphore> imageAvailableSemaphores;
-	std::vector<VkSemaphore> renderFinishedSemaphores;
-	std::vector<VkFence> inFlightFences;
+	std::vector<VkSemaphore> m_imageAvailableSemaphores;
+	std::vector<VkSemaphore> m_renderFinishedSemaphores;
+	std::vector<VkFence> m_inFlightFences;
 	std::vector<VkFence> imagesInFlight;
 	size_t currentFrame = 0;
 };

@@ -21,15 +21,14 @@ Renderer::~Renderer()
 
 void Renderer::createCommandBuffers()
 {
-	commandBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
+	m_commandBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
+	device.allocateCommandBuffers(SwapChain::MAX_FRAMES_IN_FLIGHT, m_commandBuffers.data());
+}
 
-	VkCommandBufferAllocateInfo allocInfo{};
-	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandPool = device.getCommandPool();
-	allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
-
-	device.allocateCommandBuffers(allocInfo, commandBuffers.data());
+void Renderer::freeCommandBuffers()
+{
+	device.freeCommandBuffers(SwapChain::MAX_FRAMES_IN_FLIGHT, m_commandBuffers.data());
+	m_commandBuffers.clear();
 }
 
 void Renderer::recreateSwapchain()
@@ -57,12 +56,6 @@ void Renderer::recreateSwapchain()
 			throw std::runtime_error("Swap chain image(or depth) format has changed");
 		}
 	}
-}
-
-void Renderer::freeCommandBuffers()
-{
-	vkFreeCommandBuffers(device.getDevice(), device.getCommandPool(), static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
-	commandBuffers.clear();
 }
 
 VkCommandBuffer Renderer::beginFrame()
