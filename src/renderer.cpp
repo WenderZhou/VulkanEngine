@@ -21,13 +21,13 @@ Renderer::~Renderer()
 
 void Renderer::createCommandBuffers()
 {
-	m_commandBuffers.resize(SwapChain::MAX_FRAMES_IN_FLIGHT);
-	device.allocateCommandBuffers(SwapChain::MAX_FRAMES_IN_FLIGHT, m_commandBuffers.data());
+	m_commandBuffers.resize(Swapchain::MAX_FRAMES_IN_FLIGHT);
+	device.allocateCommandBuffers(Swapchain::MAX_FRAMES_IN_FLIGHT, m_commandBuffers.data());
 }
 
 void Renderer::freeCommandBuffers()
 {
-	device.freeCommandBuffers(SwapChain::MAX_FRAMES_IN_FLIGHT, m_commandBuffers.data());
+	device.freeCommandBuffers(Swapchain::MAX_FRAMES_IN_FLIGHT, m_commandBuffers.data());
 	m_commandBuffers.clear();
 }
 
@@ -42,16 +42,16 @@ void Renderer::recreateSwapchain()
 
 	device.waitIdle();
 
-	if(m_pSwapChain == nullptr)
+	if(m_pSwapchain == nullptr)
 	{
-		m_pSwapChain = std::make_unique<SwapChain>(device, extent);
+		m_pSwapchain = std::make_unique<Swapchain>(device, extent);
 	}
 	else
 	{
-		std::shared_ptr<SwapChain> oldSwapchain = std::move(m_pSwapChain);
-		m_pSwapChain = std::make_unique<SwapChain>(device, extent, oldSwapchain);
+		std::shared_ptr<Swapchain> oldSwapchain = std::move(m_pSwapchain);
+		m_pSwapchain = std::make_unique<Swapchain>(device, extent, oldSwapchain);
 
-		if(!oldSwapchain->compareSwapFormats(*m_pSwapChain.get()))
+		if(!oldSwapchain->compareSwapFormats(*m_pSwapchain.get()))
 		{
 			throw std::runtime_error("Swap chain image(or depth) format has changed");
 		}
@@ -62,12 +62,12 @@ VkCommandBuffer Renderer::beginFrame()
 {
 	assert(!isFrameStarted && "Can't call beginFrame while already in progress");
 
-	VkResult result = m_pSwapChain->acquireNextImage(&currentImageIndex);
+	VkResult result = m_pSwapchain->acquireNextImage(&currentImageIndex);
 
 	if(result == VK_ERROR_OUT_OF_DATE_KHR)
 	{
 		recreateSwapchain();
-		return nullptr;
+		return VK_NULL_HANDLE;
 	}
 
 	if(result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
@@ -102,7 +102,7 @@ void Renderer::endFrame()
 		throw std::runtime_error("failed to record command buffer");
 	}
 
-	VkResult result = m_pSwapChain->submitCommandBuffers(&commandBuffer, &currentImageIndex);
+	VkResult result = m_pSwapchain->submitCommandBuffers(&commandBuffer, &currentImageIndex);
 	if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window.wasWindowResized())
 	{
 		window.resetWindowResizedFlag();
@@ -114,7 +114,7 @@ void Renderer::endFrame()
 	}
 
 	isFrameStarted = false;
-	currentFrameIndex = (currentFrameIndex + 1) % SwapChain::MAX_FRAMES_IN_FLIGHT;
+	currentFrameIndex = (currentFrameIndex + 1) % Swapchain::MAX_FRAMES_IN_FLIGHT;
 }
 
 void Renderer::beginSwapchainRenderPass(VkCommandBuffer commandBuffer)
@@ -128,10 +128,10 @@ void Renderer::beginSwapchainRenderPass(VkCommandBuffer commandBuffer)
 
 	VkRenderPassBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	beginInfo.renderPass = m_pSwapChain->getRenderPass();
-	beginInfo.framebuffer = m_pSwapChain->getFrameBuffer(currentImageIndex);
+	beginInfo.renderPass = m_pSwapchain->getRenderPass();
+	beginInfo.framebuffer = m_pSwapchain->getFrameBuffer(currentImageIndex);
 	beginInfo.renderArea.offset = { 0,0 };
-	beginInfo.renderArea.extent = m_pSwapChain->getSwapChainExtent();
+	beginInfo.renderArea.extent = m_pSwapchain->getSwapChainExtent();
 	beginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 	beginInfo.pClearValues = clearValues.data();
 
@@ -140,11 +140,11 @@ void Renderer::beginSwapchainRenderPass(VkCommandBuffer commandBuffer)
 	VkViewport viewport{};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
-	viewport.width = static_cast<float>(m_pSwapChain->getSwapChainExtent().width);
-	viewport.height = static_cast<float>(m_pSwapChain->getSwapChainExtent().height);
+	viewport.width = static_cast<float>(m_pSwapchain->getSwapChainExtent().width);
+	viewport.height = static_cast<float>(m_pSwapchain->getSwapChainExtent().height);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
-	VkRect2D scissor{ {0, 0}, m_pSwapChain->getSwapChainExtent() };
+	VkRect2D scissor{ {0, 0}, m_pSwapchain->getSwapChainExtent() };
 	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 }

@@ -559,6 +559,14 @@ void Device::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, u
 	endSingleTimeCommands(commandBuffer);
 }
 
+void Device::graphicsQueueSubmit(const VkSubmitInfo& submitInfo, VkFence fence)
+{
+	if(vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, fence) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to submit draw command buffer!");
+	}
+}
+
 void Device::allocateMemory(const VkMemoryAllocateInfo& allocateInfo, VkDeviceMemory& memory)
 {
 	if(vkAllocateMemory(m_device, &allocateInfo, nullptr, &memory) != VK_SUCCESS)
@@ -747,6 +755,37 @@ void Device::allocateCommandBuffers(uint32_t commandBufferCount, VkCommandBuffer
 void Device::freeCommandBuffers(uint32_t commandBufferCount, VkCommandBuffer* pCommandBuffers)
 {
 	vkFreeCommandBuffers(m_device, m_commandPool, commandBufferCount, pCommandBuffers);
+}
+
+void Device::createSwapchain(const VkSwapchainCreateInfoKHR& createInfo, VkSwapchainKHR& swapchain)
+{
+	if(vkCreateSwapchainKHR(m_device, &createInfo, nullptr, &swapchain) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create swap chain!");
+	}
+}
+
+void Device::destroySwapchain(VkSwapchainKHR swapchain)
+{
+	vkDestroySwapchainKHR(m_device, swapchain, nullptr);
+}
+
+void Device::getSwapchainImages(VkSwapchainKHR swapchain, std::vector<VkImage>& swapchainImages)
+{
+	uint32_t imageCount = 0;
+	vkGetSwapchainImagesKHR(m_device, swapchain, &imageCount, nullptr);
+	swapchainImages.resize(imageCount);
+	vkGetSwapchainImagesKHR(m_device, swapchain, &imageCount, swapchainImages.data());
+}
+
+VkResult Device::acquireNextImage(VkSwapchainKHR swapchain, VkSemaphore semaphore, uint32_t* pImageIndex)
+{
+	return vkAcquireNextImageKHR(m_device, swapchain, UINT64_MAX, semaphore, VK_NULL_HANDLE, pImageIndex);
+}
+
+VkResult Device::present(const VkPresentInfoKHR& presentInfo)
+{
+	return vkQueuePresentKHR(m_presentQueue, &presentInfo);
 }
 
 }

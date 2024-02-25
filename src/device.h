@@ -65,6 +65,8 @@ public:
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layerCount);
 
+	void graphicsQueueSubmit(const VkSubmitInfo& submitInfo, VkFence fence);
+
 	void allocateMemory(const VkMemoryAllocateInfo& allocateInfo, VkDeviceMemory& memory);
 	void freeMemory(VkDeviceMemory memory);
 
@@ -102,6 +104,12 @@ public:
 
 	void allocateCommandBuffers(uint32_t commandBufferCount, VkCommandBuffer* pCommandBuffers);
 	void freeCommandBuffers(uint32_t commandBufferCount, VkCommandBuffer* pCommandBuffers);
+
+	void createSwapchain(const VkSwapchainCreateInfoKHR& createInfo, VkSwapchainKHR& swapchain);
+	void destroySwapchain(VkSwapchainKHR swapchain);
+	void getSwapchainImages(VkSwapchainKHR swapchain, std::vector<VkImage>& swapchainImages);
+	VkResult acquireNextImage(VkSwapchainKHR swapchain, VkSemaphore semaphore, uint32_t* pImageIndex);
+	VkResult present(const VkPresentInfoKHR& presentInfo);
 
 	VkPhysicalDeviceProperties properties;
 

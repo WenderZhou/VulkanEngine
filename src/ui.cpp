@@ -14,7 +14,7 @@ UI::UI(Window& window, Device& device, Renderer& renderer, std::unique_ptr<Descr
 	info.DescriptorPool = descriptorPool->getDescriptorPool();
 	info.Device = device.getDevice();
 	info.PhysicalDevice = device.getPhysicalDevice();
-	info.ImageCount = SwapChain::MAX_FRAMES_IN_FLIGHT;
+	info.ImageCount = Swapchain::MAX_FRAMES_IN_FLIGHT;
 	info.Instance = device.getInstance();
 	info.Queue = device.getGraphicsQueue();
 	info.MinImageCount = 2;
