@@ -3,7 +3,7 @@
 namespace VulkanEngine
 {
 
-UI::UI(Window& window, Device& device, Renderer& renderer, std::unique_ptr<DescriptorPool>& descriptorPool)
+UI::UI(Window& window, Device& device, std::unique_ptr<DescriptorPool>& descriptorPool)
 {
 	ImGui::CreateContext();
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
@@ -14,12 +14,12 @@ UI::UI(Window& window, Device& device, Renderer& renderer, std::unique_ptr<Descr
 	info.DescriptorPool = descriptorPool->getDescriptorPool();
 	info.Device = device.getDevice();
 	info.PhysicalDevice = device.getPhysicalDevice();
-	info.ImageCount = Swapchain::MAX_FRAMES_IN_FLIGHT;
+	info.ImageCount = Device::MAX_FRAMES_IN_FLIGHT;
 	info.Instance = device.getInstance();
 	info.Queue = device.getGraphicsQueue();
 	info.MinImageCount = 2;
 
-	ImGui_ImplVulkan_Init(&info, renderer.getSwapchainRenderPass());
+	ImGui_ImplVulkan_Init(&info, device.getRenderPass());
 
 	ImGui_ImplVulkan_CreateFontsTexture();
 }

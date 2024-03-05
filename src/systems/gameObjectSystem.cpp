@@ -26,7 +26,7 @@ GameObjectSystem::GameObjectSystem(Device& device, VkRenderPass renderPass, VkDe
 
 GameObjectSystem::~GameObjectSystem()
 {
-	device.destroyPipelineLayout(pipelineLayout);
+	vkDestroyPipelineLayout(device.getDevice(), pipelineLayout, nullptr);
 }
 
 void GameObjectSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout)
@@ -38,14 +38,17 @@ void GameObjectSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayou
 
 	std::vector<VkDescriptorSetLayout> descriptorSetLayouts{ globalSetLayout };
 
-	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
-	pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
-	pipelineLayoutInfo.pushConstantRangeCount = 1;
-	pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
+	VkPipelineLayoutCreateInfo createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	createInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
+	createInfo.pSetLayouts = descriptorSetLayouts.data();
+	createInfo.pushConstantRangeCount = 1;
+	createInfo.pPushConstantRanges = &pushConstantRange;
 
-	device.createPipelineLayout(pipelineLayoutInfo, pipelineLayout);
+	if (vkCreatePipelineLayout(device.getDevice(), &createInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create pipeline layout!");
+	}
 }
 
 void GameObjectSystem::createPipeline(VkRenderPass renderPass)

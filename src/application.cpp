@@ -22,8 +22,8 @@ App::App()
 {
 	globalPool =
 		DescriptorPool::Builder(device)
-		.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Swapchain::MAX_FRAMES_IN_FLIGHT)
-		.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, Swapchain::MAX_FRAMES_IN_FLIGHT)
+		.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Device::MAX_FRAMES_IN_FLIGHT)
+		.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, Device::MAX_FRAMES_IN_FLIGHT)
 		.setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
 		.build();
 	loadGameObjects();
@@ -36,15 +36,10 @@ App::~App()
 
 void App::run()
 {
-	std::vector<std::unique_ptr<Buffer>> uboBuffers(Swapchain::MAX_FRAMES_IN_FLIGHT);
+	std::vector<std::unique_ptr<Buffer>> uboBuffers(Device::MAX_FRAMES_IN_FLIGHT);
 	for(int i = 0; i < uboBuffers.size(); i++)
 	{
-		uboBuffers[i] = std::make_unique<Buffer>(
-			device,
-			sizeof(GlobalUbo),
-			1,
-			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+		uboBuffers[i] = std::make_unique<Buffer>(device, sizeof(GlobalUbo), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 		uboBuffers[i]->map();
 	}
 
@@ -52,17 +47,15 @@ void App::run()
 		.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
 		.build();
 
-	std::vector<VkDescriptorSet> globalDescriptorSets(Swapchain::MAX_FRAMES_IN_FLIGHT);
+	std::vector<VkDescriptorSet> globalDescriptorSets(Device::MAX_FRAMES_IN_FLIGHT);
 	for(int i = 0; i < globalDescriptorSets.size(); i++)
 	{
 		auto bufferInfo = uboBuffers[i]->descriptorInfo();
-		DescriptorWriter(*globalSetLayout, *globalPool)
-			.writeBuffer(0, &bufferInfo)
-			.build(globalDescriptorSets[i]);
+		DescriptorWriter(*globalSetLayout, *globalPool).writeBuffer(0, &bufferInfo).build(globalDescriptorSets[i]);
 	}
 
-	GameObjectSystem gameObjectSystem{ device, renderer.getSwapchainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
-	PointLightSystem pointLightSystem{ device, renderer.getSwapchainRenderPass(), globalSetLayout->getDescriptorSetLayout() };
+	GameObjectSystem gameObjectSystem{ device, device.getRenderPass(), globalSetLayout->getDescriptorSetLayout() };
+	PointLightSystem pointLightSystem{ device, device.getRenderPass(), globalSetLayout->getDescriptorSetLayout() };
 	Camera camera{};
 
 	// for store the camera state
@@ -70,7 +63,7 @@ void App::run()
 	viewObject.transform.translation.z = -2.5f;
 	KeyboardMovementController cameraController{};
 
-	UI ui{ window, device, renderer, globalPool };
+	UI ui{ window, device, globalPool };
 
 	auto lastTime = std::chrono::high_resolution_clock::now();
 
@@ -85,12 +78,12 @@ void App::run()
 		cameraController.moveInPlaneXZ(window.getGLFWWindow(), frameTime, viewObject);
 		camera.setViewYXZ(viewObject.transform.translation, viewObject.transform.rotation);
 
-		float aspectRatio = renderer.getAspectRatio();
+		float aspectRatio = device.getAspectRatio();
 		camera.setPerspectiveProjection(glm::radians(50.0f), aspectRatio, 0.1f, 100.f);
 
-		if(VkCommandBuffer commandBuffer = renderer.beginFrame())
+		if(VkCommandBuffer commandBuffer = device.beginFrame())
 		{
-			int frameIndex = renderer.getFrameIndex();
+			int frameIndex = device.getFrameIndex();
 
 			FrameInfo frameInfo
 			{
@@ -110,7 +103,7 @@ void App::run()
 			uboBuffers[frameIndex]->writeToBuffer(&ubo);
 			uboBuffers[frameIndex]->flush();
 
-			renderer.beginSwapchainRenderPass(commandBuffer);
+			device.beginSwapchainRenderPass(commandBuffer);
 
 			// order matters
 			gameObjectSystem.render(frameInfo);
@@ -118,8 +111,8 @@ void App::run()
 
 			ui.render(commandBuffer);
 
-			renderer.endSwapchainRenderPass(commandBuffer);
-			renderer.endFrame();
+			device.endSwapchainRenderPass(commandBuffer);
+			device.endFrame();
 		}
 	}
 

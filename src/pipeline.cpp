@@ -15,7 +15,7 @@ Pipeline::Pipeline(Device& device, const std::string& vertFilepath, const std::s
 
 Pipeline::~Pipeline()
 {
-	m_device.destroyPipeline(m_graphicsPipeline);
+	vkDestroyPipeline(m_device.getDevice(), m_graphicsPipeline, nullptr);
 }
 
 void Pipeline::createGraphicsPipeline(const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfig& config)
@@ -143,7 +143,10 @@ void Pipeline::createGraphicsPipeline(const std::string& vertFilepath, const std
 	createInfo.basePipelineIndex = -1;
 	createInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-	m_device.createGraphicsPipeline(createInfo, m_graphicsPipeline);
+	if(vkCreateGraphicsPipelines(m_device.getDevice(), VK_NULL_HANDLE, 1, &createInfo, nullptr, &m_graphicsPipeline) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create graphics pipeline");
+	}
 }
 
 void Pipeline::bind(VkCommandBuffer commandBuffer)
