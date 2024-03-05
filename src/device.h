@@ -83,30 +83,15 @@ public:
 
 	VkResult submitCommandBuffers(const VkCommandBuffer* buffers, uint32_t* imageIndex);
 
-	VkCommandBuffer getCurrentCommandBuffer() const 
-	{
-		assert(isFrameStarted && "Cannot get command buffer when frame not in progress");
-		return m_commandBuffers[currentFrameIndex];
-	}
-
 	int getFrameIndex() const
 	{
-		assert(isFrameStarted && "Cannot get frame index when frame not in progress");
 		return currentFrameIndex;
 	}
 
 	VkCommandBuffer beginFrame();
 	void endFrame();
-	void beginSwapchainRenderPass(VkCommandBuffer commandBuffer);
-	void endSwapchainRenderPass(VkCommandBuffer commandBuffer);
-
-private:
-	
-
-	// Helper functions
-	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
-	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
-	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+	void beginRenderPass(VkCommandBuffer commandBuffer);
+	void endRenderPass(VkCommandBuffer commandBuffer);
 
 private:
 	void createInstance();
@@ -135,16 +120,15 @@ private:
 
 	bool isSuitablePhysicalDevice(VkPhysicalDevice physicalDevice);
 
-	std::vector<const char*> getRequiredInstanceExtensionNames();
-	void checkInstanceExtensionSupport();
-
-	std::vector<const char*> getRequiredDeviceExtensionNames();
-	bool checkDeviceExtensionSupport(VkPhysicalDevice physicalDevice);
-
-	const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
-	bool checkValidationLayerSupport();
+	std::vector<const char*> getRequiredInstanceExtensions();
+	std::vector<const char*> getRequiredInstanceLayers();
+	std::vector<const char*> getRequiredDeviceExtensions();
 
 	SwapChainSupportDetails getSwapChainSupportDetails(VkPhysicalDevice physicalDevice);
+
+	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
+	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
+	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 
 	Window& m_window;
 
@@ -189,7 +173,6 @@ private:
 
 	uint32_t currentImageIndex;
 	int currentFrameIndex = 0;
-	bool isFrameStarted = false;
 };
 
 }

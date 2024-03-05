@@ -81,39 +81,37 @@ void App::run()
 		float aspectRatio = device.getAspectRatio();
 		camera.setPerspectiveProjection(glm::radians(50.0f), aspectRatio, 0.1f, 100.f);
 
-		if(VkCommandBuffer commandBuffer = device.beginFrame())
+		VkCommandBuffer commandBuffer = device.beginFrame();
+		int frameIndex = device.getFrameIndex();
+
+		FrameInfo frameInfo
 		{
-			int frameIndex = device.getFrameIndex();
+			frameIndex,
+			frameTime,
+			commandBuffer,
+			camera,
+			globalDescriptorSets[frameIndex],
+			gameObjects
+		};
 
-			FrameInfo frameInfo
-			{
-				frameIndex,
-				frameTime,
-				commandBuffer,
-				camera,
-				globalDescriptorSets[frameIndex],
-				gameObjects
-			};
+		GlobalUbo ubo{};
+		ubo.projection = camera.getProjection();
+		ubo.view = camera.getView();
+		ubo.invView = camera.getInvView();
+		pointLightSystem.update(frameInfo, ubo);
+		uboBuffers[frameIndex]->writeToBuffer(&ubo);
+		uboBuffers[frameIndex]->flush();
 
-			GlobalUbo ubo{};
-			ubo.projection = camera.getProjection();
-			ubo.view = camera.getView();
-			ubo.invView = camera.getInvView();
-			pointLightSystem.update(frameInfo, ubo);
-			uboBuffers[frameIndex]->writeToBuffer(&ubo);
-			uboBuffers[frameIndex]->flush();
+		device.beginRenderPass(commandBuffer);
 
-			device.beginSwapchainRenderPass(commandBuffer);
+		// order matters
+		gameObjectSystem.render(frameInfo);
+		pointLightSystem.render(frameInfo);
 
-			// order matters
-			gameObjectSystem.render(frameInfo);
-			pointLightSystem.render(frameInfo);
+		ui.render(frameInfo);
 
-			ui.render(commandBuffer);
-
-			device.endSwapchainRenderPass(commandBuffer);
-			device.endFrame();
-		}
+		device.endRenderPass(commandBuffer);
+		device.endFrame();
 	}
 
 	device.waitIdle();

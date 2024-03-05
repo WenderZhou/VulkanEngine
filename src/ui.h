@@ -3,6 +3,7 @@
 #include "window.h"
 #include "device.h"
 #include "descriptor.h"
+#include "frameInfo.h"
 
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
@@ -16,7 +17,7 @@ class UI
 public:
     UI(Window &window, Device &device, std::unique_ptr<DescriptorPool> &descriptorPool);
     ~UI();
-    void render(VkCommandBuffer commandBuffer);
+    void render(FrameInfo& frameInfo);
 };
 
 }

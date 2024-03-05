@@ -90,11 +90,6 @@ void Device::waitIdle()
 
 void Device::createInstance()
 {
-	if(enableValidationLayers && !checkValidationLayerSupport())
-	{
-		throw std::runtime_error("validation layers requested, but not available!");
-	}
-
 	VkApplicationInfo appInfo = {};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 	appInfo.pApplicationName = "VulkanEngine App";
@@ -108,22 +103,22 @@ void Device::createInstance()
 	createInfo.pApplicationInfo = &appInfo;
 	createInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 
-	std::vector<const char*> extensionNames = getRequiredInstanceExtensionNames();
-	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensionNames.size());
-	createInfo.ppEnabledExtensionNames = extensionNames.data();
+	std::vector<const char*> extensions = getRequiredInstanceExtensions();
+	std::vector<const char*> layers = getRequiredInstanceLayers();
+
+	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+	createInfo.ppEnabledExtensionNames = extensions.data();
+	createInfo.enabledLayerCount = static_cast<uint32_t>(layers.size());
+	createInfo.ppEnabledLayerNames = layers.data();
 
 	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
 	if(enableValidationLayers)
 	{
-		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-		createInfo.ppEnabledLayerNames = validationLayers.data();
-
 		populateDebugMessengerCreateInfo(debugCreateInfo);
 		createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
 	}
 	else
 	{
-		createInfo.enabledLayerCount = 0;
 		createInfo.pNext = nullptr;
 	}
 
@@ -131,8 +126,6 @@ void Device::createInstance()
 	{
 		throw std::runtime_error("failed to create instance!");
 	}
-
-	checkInstanceExtensionSupport();
 }
 
 bool Device::isSuitablePhysicalDevice(VkPhysicalDevice physicalDevice)
@@ -141,7 +134,23 @@ bool Device::isSuitablePhysicalDevice(VkPhysicalDevice physicalDevice)
 	if(!indices.isComplete())
 		return false;
 
-	if(!checkDeviceExtensionSupport(physicalDevice))
+	uint32_t extensionCount;
+	vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, nullptr);
+	std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+	vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, availableExtensions.data());
+
+	std::set<std::string> requiredExtensions;
+	for(const auto& extension : getRequiredDeviceExtensions())
+	{
+		requiredExtensions.insert(extension);
+	}
+
+	for(const auto& extension : availableExtensions)
+	{
+		requiredExtensions.erase(extension.extensionName);
+	}
+
+	if(!requiredExtensions.empty())
 		return false;
 
 	SwapChainSupportDetails details = getSwapChainSupportDetails(physicalDevice);
@@ -217,22 +226,11 @@ void Device::createLogicalDevice()
 	createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 	createInfo.pQueueCreateInfos = queueCreateInfos.data();
 
-	std::vector<const char*> deviceExtensions = getRequiredDeviceExtensionNames();
+	std::vector<const char*> deviceExtensions = getRequiredDeviceExtensions();
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
 	createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
 	createInfo.pEnabledFeatures = &enabledFeatures;
-
-	// might not really be necessary anymore because device specific validation layers have been deprecated
-	if(enableValidationLayers)
-	{
-		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-		createInfo.ppEnabledLayerNames = validationLayers.data();
-	}
-	else
-	{
-		createInfo.enabledLayerCount = 0;
-	}
 
 	if(vkCreateDevice(m_physicalDevice, &createInfo, nullptr, &m_device) != VK_SUCCESS)
 	{
@@ -535,7 +533,6 @@ VkPresentModeKHR Device::chooseSwapPresentMode(const std::vector<VkPresentModeKH
 		}
 	}
 
-	std::cout << "Present mode: V-Sync" << std::endl;
 	return VK_PRESENT_MODE_FIFO_KHR;
 }
 
@@ -654,37 +651,7 @@ void Device::setupDebugMessenger()
 	}
 }
 
-bool Device::checkValidationLayerSupport()
-{
-	uint32_t layerCount;
-	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-
-	std::vector<VkLayerProperties> availableLayers(layerCount);
-	vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
-
-	for(const char* layerName : validationLayers)
-	{
-		bool layerFound = false;
-
-		for(const auto& layerProperties : availableLayers)
-		{
-			if(strcmp(layerName, layerProperties.layerName) == 0)
-			{
-				layerFound = true;
-				break;
-			}
-		}
-
-		if(!layerFound)
-		{
-			return false;
-		}
-	}
-
-	return true;
-}
-
-std::vector<const char*> Device::getRequiredInstanceExtensionNames()
+std::vector<const char*> Device::getRequiredInstanceExtensions()
 {
 	std::vector<const char*> names;
 
@@ -705,58 +672,46 @@ std::vector<const char*> Device::getRequiredInstanceExtensionNames()
 	return names;
 }
 
-void Device::checkInstanceExtensionSupport()
+std::vector<const char*> Device::getRequiredDeviceExtensions()
 {
-	uint32_t extensionCount = 0;
-	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+	std::vector<const char*> extensions;
+	extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+	return extensions;
+}
 
-	std::vector<VkExtensionProperties> availableExtensions(extensionCount);
-	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, availableExtensions.data());
-
-	std::set<std::string> availableExtensionNames;
-	for(const auto& extension : availableExtensions)
+std::vector<const char*> Device::getRequiredInstanceLayers()
+{
+	std::vector<const char*> requiredLayers;
+	if(enableValidationLayers)
 	{
-		availableExtensionNames.insert(extension.extensionName);
+		requiredLayers.push_back("VK_LAYER_KHRONOS_validation");
 	}
 
-	for(const auto& name : getRequiredInstanceExtensionNames())
+	uint32_t layerCount;
+	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+	std::vector<VkLayerProperties> layerProperties(layerCount);
+	vkEnumerateInstanceLayerProperties(&layerCount, layerProperties.data());
+
+	for(auto layer : requiredLayers)
 	{
-		if(availableExtensionNames.find(name) == availableExtensionNames.end())
+		bool layerFound = false;
+
+		for(const VkLayerProperties& property : layerProperties)
 		{
-			throw std::runtime_error("Missing required glfw extension");
+			if(strcmp(layer, property.layerName) == 0)
+			{
+				layerFound = true;
+				break;
+			}
+		}
+
+		if(!layerFound)
+		{
+			throw std::runtime_error("validation layers requested, but not available!");;
 		}
 	}
-}
 
-std::vector<const char*> Device::getRequiredDeviceExtensionNames()
-{
-	std::vector<const char*> names;
-
-	names.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-
-	return names;
-}
-
-bool Device::checkDeviceExtensionSupport(VkPhysicalDevice physicalDevice)
-{
-	uint32_t extensionCount;
-	vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, nullptr);
-
-	std::vector<VkExtensionProperties> availableExtensions(extensionCount);
-	vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, availableExtensions.data());
-
-	std::set<std::string> requiredExtensionsNames;
-	for(const auto& name : getRequiredDeviceExtensionNames())
-	{
-		requiredExtensionsNames.insert(name);
-	}
-
-	for(const auto& extension : availableExtensions)
-	{
-		requiredExtensionsNames.erase(extension.extensionName);
-	}
-
-	return requiredExtensionsNames.empty();
+	return requiredLayers;
 }
 
 QueueFamilyIndices Device::getQueueFamilyIndices(VkPhysicalDevice physicalDevice)
@@ -1026,8 +981,6 @@ void Device::cleanupSwapchain()
 
 VkCommandBuffer Device::beginFrame()
 {
-	assert(!isFrameStarted && "Can't call beginFrame while already in progress");
-
 	vkWaitForFences(m_device, 1, &m_inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
 	VkResult result = vkAcquireNextImageKHR(m_device, m_swapchain, UINT64_MAX, m_imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &currentImageIndex);
@@ -1043,9 +996,7 @@ VkCommandBuffer Device::beginFrame()
 		throw std::runtime_error("failed to acquire swap chain image");
 	}
 
-	isFrameStarted = true;
-
-	VkCommandBuffer commandBuffer = getCurrentCommandBuffer();
+	VkCommandBuffer commandBuffer = m_commandBuffers[currentFrameIndex];;
 
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -1061,9 +1012,7 @@ VkCommandBuffer Device::beginFrame()
 
 void Device::endFrame()
 {
-	assert(isFrameStarted && "Can't call endFrame while frame is not in progress");
-
-	VkCommandBuffer commandBuffer = getCurrentCommandBuffer();
+	VkCommandBuffer commandBuffer = m_commandBuffers[currentFrameIndex];
 
 	if(vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
 	{
@@ -1081,14 +1030,12 @@ void Device::endFrame()
 		throw std::runtime_error("failed to present swap chain image");
 	}
 
-	isFrameStarted = false;
 	currentFrameIndex = (currentFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-void Device::beginSwapchainRenderPass(VkCommandBuffer commandBuffer)
+void Device::beginRenderPass(VkCommandBuffer commandBuffer)
 {
-	assert(isFrameStarted && "Can't call beginSwapchainRenderPass while frame is not in progress");
-	assert(commandBuffer == getCurrentCommandBuffer() && "Can't begin render pass on command buffer from a different frame");
+	assert(commandBuffer == m_commandBuffers[currentFrameIndex] && "Can't begin render pass on command buffer from a different frame");
 
 	std::array<VkClearValue, 2> clearValues{};
 	clearValues[0].color = { 0.1f, 0.1f, 0.1f, 1.0f };
@@ -1117,10 +1064,9 @@ void Device::beginSwapchainRenderPass(VkCommandBuffer commandBuffer)
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 }
 
-void Device::endSwapchainRenderPass(VkCommandBuffer commandBuffer)
+void Device::endRenderPass(VkCommandBuffer commandBuffer)
 {
-	assert(isFrameStarted && "Can't call endSwapchainRenderPass while frame is not in progress");
-	assert(commandBuffer == getCurrentCommandBuffer() && "Can't end render pass on command buffer from a different frame");
+	assert(commandBuffer == m_commandBuffers[currentFrameIndex] && "Can't end render pass on command buffer from a different frame");
 
 	vkCmdEndRenderPass(commandBuffer);
 }

@@ -31,7 +31,7 @@ UI::~UI()
 	ImGui::DestroyContext();
 }
 
-void UI::render(VkCommandBuffer commandBuffer)
+void UI::render(FrameInfo& frameInfo)
 {
 	ImGui_ImplVulkan_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
@@ -46,7 +46,7 @@ void UI::render(VkCommandBuffer commandBuffer)
 	ImGui::End();
 
 	ImGui::Render();
-	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), frameInfo.commandBuffer);
 }
 
 }
