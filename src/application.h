@@ -32,7 +32,7 @@ private:
 	Window window{ WIDTH, HEIGHT, "Vulkan Window" };
 	Device device{ window };
 
-	std::unique_ptr<DescriptorPool> globalPool{};
+	DescriptorPool globalPool{ device };
 	GameObject::Map gameObjects;
 };
 

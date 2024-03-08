@@ -20,12 +20,11 @@ namespace VulkanEngine
 
 App::App()
 {
-	globalPool =
-		DescriptorPool::Builder(device)
-		.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Device::MAX_FRAMES_IN_FLIGHT)
-		.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, Device::MAX_FRAMES_IN_FLIGHT)
-		.setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
-		.build();
+	globalPool.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Device::MAX_FRAMES_IN_FLIGHT);
+	globalPool.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, Device::MAX_FRAMES_IN_FLIGHT);
+	globalPool.setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
+	globalPool.build();
+
 	loadGameObjects();
 }
 
@@ -36,26 +35,27 @@ App::~App()
 
 void App::run()
 {
-	std::vector<std::unique_ptr<Buffer>> uboBuffers(Device::MAX_FRAMES_IN_FLIGHT);
-	for(int i = 0; i < uboBuffers.size(); i++)
+	std::vector<std::unique_ptr<Buffer>> uniformBuffers(Device::MAX_FRAMES_IN_FLIGHT);
+	for(int i = 0; i < uniformBuffers.size(); i++)
 	{
-		uboBuffers[i] = std::make_unique<Buffer>(device, sizeof(GlobalUbo), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-		uboBuffers[i]->map();
+		uniformBuffers[i] = std::make_unique<Buffer>(device, sizeof(GlobalUbo), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+		uniformBuffers[i]->map();
 	}
 
-	auto globalSetLayout = DescriptorSetLayout::Builder(device)
-		.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
-		.build();
+	DescriptorSetLayout descriptorSetLayout{ device };
+	descriptorSetLayout.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS);
+	descriptorSetLayout.build();
 
-	std::vector<VkDescriptorSet> globalDescriptorSets(Device::MAX_FRAMES_IN_FLIGHT);
-	for(int i = 0; i < globalDescriptorSets.size(); i++)
+	std::vector<VkDescriptorSet> descriptorSets(Device::MAX_FRAMES_IN_FLIGHT);
+	for(int i = 0; i < descriptorSets.size(); i++)
 	{
-		auto bufferInfo = uboBuffers[i]->descriptorInfo();
-		DescriptorWriter(*globalSetLayout, *globalPool).writeBuffer(0, &bufferInfo).build(globalDescriptorSets[i]);
+		auto bufferInfo = uniformBuffers[i]->descriptorInfo();
+		std::vector<DescriptorDesc> descriptorDescs = { {0, &bufferInfo} };
+		globalPool.allocateDescriptorSet(descriptorSetLayout, descriptorDescs, descriptorSets[i]);
 	}
 
-	GameObjectSystem gameObjectSystem{ device, device.getRenderPass(), globalSetLayout->getDescriptorSetLayout() };
-	PointLightSystem pointLightSystem{ device, device.getRenderPass(), globalSetLayout->getDescriptorSetLayout() };
+	GameObjectSystem gameObjectSystem{ device, device.getRenderPass(), descriptorSetLayout.getDescriptorSetLayout() };
+	PointLightSystem pointLightSystem{ device, device.getRenderPass(), descriptorSetLayout.getDescriptorSetLayout() };
 	Camera camera{};
 
 	// for store the camera state
@@ -90,7 +90,7 @@ void App::run()
 			frameTime,
 			commandBuffer,
 			camera,
-			globalDescriptorSets[frameIndex],
+			descriptorSets[frameIndex],
 			gameObjects
 		};
 
@@ -99,8 +99,8 @@ void App::run()
 		ubo.view = camera.getView();
 		ubo.invView = camera.getInvView();
 		pointLightSystem.update(frameInfo, ubo);
-		uboBuffers[frameIndex]->writeToBuffer(&ubo);
-		uboBuffers[frameIndex]->flush();
+		uniformBuffers[frameIndex]->writeToBuffer(&ubo);
+		uniformBuffers[frameIndex]->flush();
 
 		device.beginRenderPass(commandBuffer);
 

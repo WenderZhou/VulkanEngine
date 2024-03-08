@@ -54,9 +54,7 @@ public:
 	VkQueue getPresentQueue() { return m_presentQueue; }
 
 	VkCommandPool getCommandPool() { return m_commandPool; }
-	VkSurfaceKHR getSurface() { return m_surface; }
 
-	SwapChainSupportDetails getSwapChainSupportDetails() { return getSwapChainSupportDetails(m_physicalDevice); }
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	QueueFamilyIndices getQueueFamilyIndices() { return getQueueFamilyIndices(m_physicalDevice); }
 	VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
@@ -68,15 +66,11 @@ public:
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layerCount);
 
-	void graphicsQueueSubmit(const VkSubmitInfo& submitInfo, VkFence fence);
-
 	void waitIdle();
 
 	VkFramebuffer getFrameBuffer(int index) { return m_swapchainFramebuffers[index]; }
 	VkRenderPass getRenderPass() { return m_renderPass; }
 	VkImageView getImageView(int index) { return m_swapchainImageViews[index]; }
-	VkFormat getSwapChainImageFormat() { return m_swapchainImageFormat; }
-	VkExtent2D getSwapChainExtent() { return m_swapchainExtent; }
 
 	float getAspectRatio() { return static_cast<float>(m_swapchainExtent.width) / static_cast<float>(m_swapchainExtent.height); }
 	VkFormat findDepthFormat();

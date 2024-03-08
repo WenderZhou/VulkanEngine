@@ -220,16 +220,16 @@ void Device::createLogicalDevice()
 	VkPhysicalDeviceFeatures enabledFeatures = {};
 	enabledFeatures.samplerAnisotropy = VK_TRUE;
 
+	std::vector<const char*> deviceExtensions = getRequiredDeviceExtensions();
+
 	VkDeviceCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-
 	createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 	createInfo.pQueueCreateInfos = queueCreateInfos.data();
-
-	std::vector<const char*> deviceExtensions = getRequiredDeviceExtensions();
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
 	createInfo.ppEnabledExtensionNames = deviceExtensions.data();
-
+	createInfo.enabledLayerCount = 0;
+	createInfo.ppEnabledLayerNames = nullptr;
 	createInfo.pEnabledFeatures = &enabledFeatures;
 
 	if(vkCreateDevice(m_physicalDevice, &createInfo, nullptr, &m_device) != VK_SUCCESS)
@@ -243,23 +243,22 @@ void Device::createLogicalDevice()
 
 void Device::createSwapchain()
 {
-	SwapChainSupportDetails details = getSwapChainSupportDetails();
+	SwapChainSupportDetails details = getSwapChainSupportDetails(m_physicalDevice);
 
 	VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(details.formats);
 	VkPresentModeKHR presentMode = chooseSwapPresentMode(details.presentModes);
 	VkExtent2D extent = chooseSwapExtent(details.capabilities);
 
-	uint32_t imageCount = details.capabilities.minImageCount + 1;
-	if(details.capabilities.maxImageCount > 0 && imageCount > details.capabilities.maxImageCount)
+	uint32_t minImageCount = details.capabilities.minImageCount;
+	if(details.capabilities.maxImageCount > 0 && minImageCount > details.capabilities.maxImageCount)
 	{
-		imageCount = details.capabilities.maxImageCount;
+		minImageCount = details.capabilities.maxImageCount;
 	}
 
 	VkSwapchainCreateInfoKHR createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-	createInfo.surface = getSurface();
-
-	createInfo.minImageCount = imageCount;
+	createInfo.surface = m_surface;
+	createInfo.minImageCount = minImageCount;
 	createInfo.imageFormat = surfaceFormat.format;
 	createInfo.imageColorSpace = surfaceFormat.colorSpace;
 	createInfo.imageExtent = extent;
@@ -293,6 +292,7 @@ void Device::createSwapchain()
 		throw std::runtime_error("failed to create swap chain!");
 	}
 
+	uint32_t imageCount = 0;
 	vkGetSwapchainImagesKHR(m_device, m_swapchain, &imageCount, nullptr);
 	m_swapchainImages.resize(imageCount);
 	vkGetSwapchainImagesKHR(m_device, m_swapchain, &imageCount, m_swapchainImages.data());
@@ -320,6 +320,74 @@ void Device::createImageViews()
 		if(vkCreateImageView(m_device, &createInfo, nullptr, &m_swapchainImageViews[i]) != VK_SUCCESS)
 		{
 			throw std::runtime_error("failed to create swapchain image view!");
+		}
+	}
+}
+
+void Device::createDepthResources()
+{
+	VkFormat depthFormat = findDepthFormat();
+	m_swapchainDepthFormat = depthFormat;
+
+	depthImages.resize(m_swapchainImages.size());
+	depthImageMemorys.resize(m_swapchainImages.size());
+	depthImageViews.resize(m_swapchainImages.size());
+
+	for(int i = 0; i < depthImages.size(); i++)
+	{
+		VkImageCreateInfo imageInfo{};
+		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		imageInfo.imageType = VK_IMAGE_TYPE_2D;
+		imageInfo.extent.width = m_swapchainExtent.width;
+		imageInfo.extent.height = m_swapchainExtent.height;
+		imageInfo.extent.depth = 1;
+		imageInfo.mipLevels = 1;
+		imageInfo.arrayLayers = 1;
+		imageInfo.format = depthFormat;
+		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		imageInfo.flags = 0;
+
+		if(vkCreateImage(m_device, &imageInfo, nullptr, &depthImages[i]) != VK_SUCCESS)
+		{
+			throw std::runtime_error("failed to create image!");
+		}
+
+		VkMemoryRequirements memRequirements;
+		vkGetImageMemoryRequirements(m_device, depthImages[i], &memRequirements);
+
+		VkMemoryAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		allocInfo.allocationSize = memRequirements.size;
+		allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+		if(vkAllocateMemory(m_device, &allocInfo, nullptr, &depthImageMemorys[i]) != VK_SUCCESS)
+		{
+			throw std::runtime_error("failed to allocate image memory!");
+		}
+
+		if(vkBindImageMemory(m_device, depthImages[i], depthImageMemorys[i], 0) != VK_SUCCESS)
+		{
+			throw std::runtime_error("failed to bind image memory!");
+		}
+
+		VkImageViewCreateInfo viewInfo{};
+		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		viewInfo.image = depthImages[i];
+		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		viewInfo.format = depthFormat;
+		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+		viewInfo.subresourceRange.baseMipLevel = 0;
+		viewInfo.subresourceRange.levelCount = 1;
+		viewInfo.subresourceRange.baseArrayLayer = 0;
+		viewInfo.subresourceRange.layerCount = 1;
+
+		if(vkCreateImageView(m_device, &viewInfo, nullptr, &depthImageViews[i]) != VK_SUCCESS)
+		{
+			throw std::runtime_error("failed to create depth image view!");
 		}
 	}
 }
@@ -391,88 +459,18 @@ void Device::createFramebuffers()
 	{
 		std::array<VkImageView, 2> attachments = { m_swapchainImageViews[i], depthImageViews[i] };
 
-		VkExtent2D swapChainExtent = getSwapChainExtent();
 		VkFramebufferCreateInfo createInfo = {};
 		createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		createInfo.renderPass = m_renderPass;
 		createInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
 		createInfo.pAttachments = attachments.data();
-		createInfo.width = swapChainExtent.width;
-		createInfo.height = swapChainExtent.height;
+		createInfo.width = m_swapchainExtent.width;
+		createInfo.height = m_swapchainExtent.height;
 		createInfo.layers = 1;
 
 		if(vkCreateFramebuffer(m_device, &createInfo, nullptr, &m_swapchainFramebuffers[i]) != VK_SUCCESS)
 		{
 			throw std::runtime_error("failed to create framebuffer!");
-		}
-	}
-}
-
-void Device::createDepthResources()
-{
-	VkFormat depthFormat = findDepthFormat();
-	m_swapchainDepthFormat = depthFormat;
-	VkExtent2D swapChainExtent = getSwapChainExtent();
-
-	depthImages.resize(m_swapchainImages.size());
-	depthImageMemorys.resize(m_swapchainImages.size());
-	depthImageViews.resize(m_swapchainImages.size());
-
-	for(int i = 0; i < depthImages.size(); i++)
-	{
-		VkImageCreateInfo imageInfo{};
-		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		imageInfo.imageType = VK_IMAGE_TYPE_2D;
-		imageInfo.extent.width = swapChainExtent.width;
-		imageInfo.extent.height = swapChainExtent.height;
-		imageInfo.extent.depth = 1;
-		imageInfo.mipLevels = 1;
-		imageInfo.arrayLayers = 1;
-		imageInfo.format = depthFormat;
-		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		imageInfo.flags = 0;
-
-		if(vkCreateImage(m_device, &imageInfo, nullptr, &depthImages[i]) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to create image!");
-		}
-
-		VkMemoryRequirements memRequirements;
-		vkGetImageMemoryRequirements(m_device, depthImages[i], &memRequirements);
-
-		VkMemoryAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-		if(vkAllocateMemory(m_device, &allocInfo, nullptr, &depthImageMemorys[i]) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to allocate image memory!");
-		}
-
-		if(vkBindImageMemory(m_device, depthImages[i], depthImageMemorys[i], 0) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to bind image memory!");
-		}
-
-		VkImageViewCreateInfo viewInfo{};
-		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		viewInfo.image = depthImages[i];
-		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		viewInfo.format = depthFormat;
-		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-		viewInfo.subresourceRange.baseMipLevel = 0;
-		viewInfo.subresourceRange.levelCount = 1;
-		viewInfo.subresourceRange.baseArrayLayer = 0;
-		viewInfo.subresourceRange.layerCount = 1;
-
-		if(vkCreateImageView(m_device, &viewInfo, nullptr, &depthImageViews[i]) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to create depth image view!");
 		}
 	}
 }
@@ -586,7 +584,10 @@ VkResult Device::submitCommandBuffers(const VkCommandBuffer* buffers, uint32_t* 
 
 	vkResetFences(m_device, 1, &m_inFlightFences[currentFrame]);
 
-	graphicsQueueSubmit(submitInfo, m_inFlightFences[currentFrame]);
+	if(vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, m_inFlightFences[currentFrame]) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to submit draw command buffer!");
+	}
 
 	VkPresentInfoKHR presentInfo = {};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -653,23 +654,23 @@ void Device::setupDebugMessenger()
 
 std::vector<const char*> Device::getRequiredInstanceExtensions()
 {
-	std::vector<const char*> names;
+	std::vector<const char*> extensions;
 
 	uint32_t glfwExtensionCount = 0;
 	const char** glfwExtensionsNames = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 	for(uint32_t i = 0; i < glfwExtensionCount; ++i)
 	{
-		names.push_back(glfwExtensionsNames[i]);
+		extensions.push_back(glfwExtensionsNames[i]);
 	}
 
 	if(enableValidationLayers)
 	{
-		names.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 	}
 
-	names.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+	extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 
-	return names;
+	return extensions;
 }
 
 std::vector<const char*> Device::getRequiredDeviceExtensions()
@@ -681,10 +682,10 @@ std::vector<const char*> Device::getRequiredDeviceExtensions()
 
 std::vector<const char*> Device::getRequiredInstanceLayers()
 {
-	std::vector<const char*> requiredLayers;
+	std::vector<const char*> layers;
 	if(enableValidationLayers)
 	{
-		requiredLayers.push_back("VK_LAYER_KHRONOS_validation");
+		layers.push_back("VK_LAYER_KHRONOS_validation");
 	}
 
 	uint32_t layerCount;
@@ -692,7 +693,7 @@ std::vector<const char*> Device::getRequiredInstanceLayers()
 	std::vector<VkLayerProperties> layerProperties(layerCount);
 	vkEnumerateInstanceLayerProperties(&layerCount, layerProperties.data());
 
-	for(auto layer : requiredLayers)
+	for(auto layer : layers)
 	{
 		bool layerFound = false;
 
@@ -711,7 +712,7 @@ std::vector<const char*> Device::getRequiredInstanceLayers()
 		}
 	}
 
-	return requiredLayers;
+	return layers;
 }
 
 QueueFamilyIndices Device::getQueueFamilyIndices(VkPhysicalDevice physicalDevice)
@@ -905,14 +906,6 @@ void Device::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, u
 	endSingleTimeCommands(commandBuffer);
 }
 
-void Device::graphicsQueueSubmit(const VkSubmitInfo& submitInfo, VkFence fence)
-{
-	if(vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, fence) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to submit draw command buffer!");
-	}
-}
-
 void Device::createCommandBuffers()
 {
 	m_commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
@@ -1046,7 +1039,7 @@ void Device::beginRenderPass(VkCommandBuffer commandBuffer)
 	beginInfo.renderPass = getRenderPass();
 	beginInfo.framebuffer = getFrameBuffer(currentImageIndex);
 	beginInfo.renderArea.offset = { 0,0 };
-	beginInfo.renderArea.extent = getSwapChainExtent();
+	beginInfo.renderArea.extent = m_swapchainExtent;
 	beginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 	beginInfo.pClearValues = clearValues.data();
 
@@ -1055,11 +1048,11 @@ void Device::beginRenderPass(VkCommandBuffer commandBuffer)
 	VkViewport viewport{};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
-	viewport.width = static_cast<float>(getSwapChainExtent().width);
-	viewport.height = static_cast<float>(getSwapChainExtent().height);
+	viewport.width = static_cast<float>(m_swapchainExtent.width);
+	viewport.height = static_cast<float>(m_swapchainExtent.height);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
-	VkRect2D scissor{ {0, 0}, getSwapChainExtent() };
+	VkRect2D scissor{ {0, 0}, m_swapchainExtent };
 	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 }

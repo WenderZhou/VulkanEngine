@@ -15,9 +15,9 @@ namespace VulkanEngine
 class UI
 {
 public:
-    UI(Window &window, Device &device, std::unique_ptr<DescriptorPool> &descriptorPool);
-    ~UI();
-    void render(FrameInfo& frameInfo);
+	UI(Window& window, Device& device, DescriptorPool& descriptorPool);
+	~UI();
+	void render(FrameInfo& frameInfo);
 };
 
 }

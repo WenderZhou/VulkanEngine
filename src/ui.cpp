@@ -3,7 +3,7 @@
 namespace VulkanEngine
 {
 
-UI::UI(Window& window, Device& device, std::unique_ptr<DescriptorPool>& descriptorPool)
+UI::UI(Window& window, Device& device, DescriptorPool& descriptorPool)
 {
 	ImGui::CreateContext();
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
@@ -11,7 +11,7 @@ UI::UI(Window& window, Device& device, std::unique_ptr<DescriptorPool>& descript
 	ImGui_ImplGlfw_InitForVulkan(window.getGLFWWindow(), true);
 
 	ImGui_ImplVulkan_InitInfo info{};
-	info.DescriptorPool = descriptorPool->getDescriptorPool();
+	info.DescriptorPool = descriptorPool.getDescriptorPool();
 	info.Device = device.getDevice();
 	info.PhysicalDevice = device.getPhysicalDevice();
 	info.ImageCount = Device::MAX_FRAMES_IN_FLIGHT;
