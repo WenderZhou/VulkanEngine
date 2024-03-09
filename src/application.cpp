@@ -3,8 +3,8 @@
 #include "keyboard.h"
 #include "camera.h"
 #include "buffer.h"
-#include "systems/gameObjectSystem.h"
-#include "systems/pointLightSystem.h"
+#include "systems/gameObjectPass.h"
+#include "systems/pointLightPass.h"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -35,27 +35,8 @@ App::~App()
 
 void App::run()
 {
-	std::vector<std::unique_ptr<Buffer>> uniformBuffers(Device::MAX_FRAMES_IN_FLIGHT);
-	for(int i = 0; i < uniformBuffers.size(); i++)
-	{
-		uniformBuffers[i] = std::make_unique<Buffer>(device, sizeof(GlobalUbo), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-		uniformBuffers[i]->map();
-	}
-
-	DescriptorSetLayout descriptorSetLayout{ device };
-	descriptorSetLayout.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS);
-	descriptorSetLayout.build();
-
-	std::vector<VkDescriptorSet> descriptorSets(Device::MAX_FRAMES_IN_FLIGHT);
-	for(int i = 0; i < descriptorSets.size(); i++)
-	{
-		auto bufferInfo = uniformBuffers[i]->descriptorInfo();
-		std::vector<DescriptorDesc> descriptorDescs = { {0, &bufferInfo} };
-		globalPool.allocateDescriptorSet(descriptorSetLayout, descriptorDescs, descriptorSets[i]);
-	}
-
-	GameObjectSystem gameObjectSystem{ device, device.getRenderPass(), descriptorSetLayout.getDescriptorSetLayout() };
-	PointLightSystem pointLightSystem{ device, device.getRenderPass(), descriptorSetLayout.getDescriptorSetLayout() };
+	GameObjectSystem gameObjectPass{ device, globalPool };
+	PointLightPass pointLightPass{ device, globalPool };
 	Camera camera{};
 
 	// for store the camera state
@@ -84,29 +65,14 @@ void App::run()
 		VkCommandBuffer commandBuffer = device.beginFrame();
 		int frameIndex = device.getFrameIndex();
 
-		FrameInfo frameInfo
-		{
-			frameIndex,
-			frameTime,
-			commandBuffer,
-			camera,
-			descriptorSets[frameIndex],
-			gameObjects
-		};
+		FrameInfo frameInfo{ frameIndex, frameTime, commandBuffer, camera, gameObjects };
 
-		GlobalUbo ubo{};
-		ubo.projection = camera.getProjection();
-		ubo.view = camera.getView();
-		ubo.invView = camera.getInvView();
-		pointLightSystem.update(frameInfo, ubo);
-		uniformBuffers[frameIndex]->writeToBuffer(&ubo);
-		uniformBuffers[frameIndex]->flush();
+		gameObjectPass.update(frameInfo);
 
 		device.beginRenderPass(commandBuffer);
 
-		// order matters
-		gameObjectSystem.render(frameInfo);
-		pointLightSystem.render(frameInfo);
+		gameObjectPass.render(frameInfo);
+		pointLightPass.render(frameInfo);
 
 		ui.render(frameInfo);
 

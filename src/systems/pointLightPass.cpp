@@ -1,4 +1,4 @@
-#include "pointLightSystem.h"
+#include "pointLightPass.h"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -19,25 +19,61 @@ struct PointLightPushConstant
 	float radius;
 };
 
-PointLightSystem::PointLightSystem(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout) :device{ device }
+struct PointLightUniformData
 {
-	createPipelineLayout(globalSetLayout);
-	createPipeline(renderPass);
+	glm::mat4 projection{ 1.0f };
+	glm::mat4 view{ 1.0f };
+};
+
+PointLightPass::PointLightPass(Device& device, DescriptorPool& descriptorPool) :device{ device }, descriptorPool{ descriptorPool }
+{
+	createUniformBuffers();
+	createDescriptorSetLayout();
+	createDescriptorSets();
+	createPipelineLayout();
+	createPipeline();
 }
 
-PointLightSystem::~PointLightSystem()
+PointLightPass::~PointLightPass()
 {
 	vkDestroyPipelineLayout(device.getDevice(), pipelineLayout, nullptr);
 }
 
-void PointLightSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout)
+void PointLightPass::createUniformBuffers()
+{
+	uniformBuffers.resize(Device::MAX_FRAMES_IN_FLIGHT);
+	for(int i = 0; i < uniformBuffers.size(); i++)
+	{
+		uniformBuffers[i] = std::make_unique<Buffer>(device, sizeof(PointLightUniformData), 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+		uniformBuffers[i]->map();
+	}
+}
+
+void PointLightPass::createDescriptorSetLayout()
+{
+	descriptorSetLayout.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS);
+	descriptorSetLayout.build();
+}
+
+void PointLightPass::createDescriptorSets()
+{
+	descriptorSets.resize(Device::MAX_FRAMES_IN_FLIGHT);
+	for(int i = 0; i < descriptorSets.size(); i++)
+	{
+		auto bufferInfo = uniformBuffers[i]->descriptorInfo();
+		std::vector<DescriptorDesc> descriptorDescs = { {0, &bufferInfo} };
+		descriptorPool.allocateDescriptorSet(descriptorSetLayout, descriptorDescs, descriptorSets[i]);
+	}
+}
+
+void PointLightPass::createPipelineLayout()
 {
 	VkPushConstantRange pushConstantRange{};
 	pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 	pushConstantRange.offset = 0;
 	pushConstantRange.size = sizeof(PointLightPushConstant);
 
-	std::vector<VkDescriptorSetLayout> descriptorSetLayouts{ globalSetLayout };
+	std::vector<VkDescriptorSetLayout> descriptorSetLayouts{ descriptorSetLayout.getDescriptorSetLayout() };
 
 	VkPipelineLayoutCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -52,38 +88,26 @@ void PointLightSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayou
 	}
 }
 
-void PointLightSystem::createPipeline(VkRenderPass renderPass)
+void PointLightPass::createPipeline()
 {
 	assert(pipelineLayout != nullptr && "Can not create pipeline before pipeline layout");
 
 	PipelineConfig pipelineConfig{};
-	pipelineConfig.renderPass = renderPass;
+	pipelineConfig.renderPass = device.getRenderPass();
 	pipelineConfig.pipelineLayout = pipelineLayout;
 
 	pipeline = std::make_unique<Pipeline>(device, "shaders/pointLight.vert.spv", "shaders/pointLight.frag.spv", pipelineConfig);
 }
 
-void PointLightSystem::update(FrameInfo& frameInfo, GlobalUbo& ubo)
+void PointLightPass::render(const FrameInfo& frameInfo)
 {
-	auto rotateLight = glm::rotate(glm::mat4(1.f), 0.5f * frameInfo.frameTime, { 0.f, -1.f, 0.f });
-	int lightCount = 0;
-	for (auto& vk : frameInfo.gameObjects)
-	{
-		auto& obj = vk.second;
-		if (obj.pPointLightComponent == nullptr)
-			continue;
-		
-		//obj.transform.translation = glm::vec3(rotateLight * glm::vec4(obj.transform.translation, 1.f));
+	PointLightUniformData ubo{};
+	ubo.projection = frameInfo.camera.getProjection();
+	ubo.view = frameInfo.camera.getView();
 
-		ubo.pointLights[lightCount].position = glm::vec4(obj.transform.translation, 1.0f);
-		ubo.pointLights[lightCount].color = glm::vec4(obj.color, obj.pPointLightComponent->lightIntensity);
-		lightCount++;
-	}
-	ubo.numLights = lightCount;
-}
+	uniformBuffers[frameInfo.frameIndex]->writeToBuffer(&ubo);
+	uniformBuffers[frameInfo.frameIndex]->flush();
 
-void PointLightSystem::render(FrameInfo& frameInfo)
-{
 	std::map<float, GameObject::id_t> map;
 	for (auto& vk : frameInfo.gameObjects)
 	{
@@ -100,7 +124,7 @@ void PointLightSystem::render(FrameInfo& frameInfo)
 
 	glm::mat4 projectionView = frameInfo.camera.getProjection() * frameInfo.camera.getView();
 
-	vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &frameInfo.globalDescriptorSet, 0, nullptr);
+	vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[frameInfo.frameIndex], 0, nullptr);
 
 	for (auto it = map.rbegin(); it != map.rend(); ++it)
 	{
