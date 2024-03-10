@@ -35,7 +35,7 @@ App::~App()
 
 void App::run()
 {
-	GameObjectSystem gameObjectPass{ device, globalPool };
+	GameObjectPass gameObjectPass{ device, globalPool };
 	PointLightPass pointLightPass{ device, globalPool };
 	Camera camera{};
 

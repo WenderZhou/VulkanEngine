@@ -1,46 +1,27 @@
 #pragma once
 
-#include "camera.h"
-#include "pipeline.h"
-#include "device.h"
-#include "gameobject.h"
-#include "frameInfo.h"
-#include "descriptor.h"
-
-#include <memory>
-#include <vector>
+#include "renderPass.h"
 
 namespace VulkanEngine
 {
-	class PointLightPass
-	{
-	public:
-		PointLightPass(Device& device, DescriptorPool& descriptorPool);
-		~PointLightPass();
 
-		PointLightPass(const PointLightPass&) = delete;
-		PointLightPass& operator=(const PointLightPass&) = delete;
+class PointLightPass : public RenderPass
+{
+public:
+	PointLightPass(Device& device, DescriptorPool& descriptorPool);
+	~PointLightPass();
 
-		void render(const FrameInfo& frameInfo);
+	PointLightPass(const PointLightPass&) = delete;
+	PointLightPass& operator=(const PointLightPass&) = delete;
 
-	private:
-		void createUniformBuffers();
-		void createDescriptorSetLayout();
-		void createDescriptorSets();
-		void createPipelineLayout();
-		void createPipeline();
+	void render(const FrameInfo& frameInfo);
 
-		Device& device;
-		DescriptorPool& descriptorPool;
-
-		std::vector<std::unique_ptr<Buffer>> uniformBuffers;
-
-		DescriptorSetLayout descriptorSetLayout{ device };
-
-		std::vector<VkDescriptorSet> descriptorSets;
-
-		std::unique_ptr<Pipeline> pipeline;
-		VkPipelineLayout pipelineLayout;
-	};
+private:
+	virtual void createUniformBuffers() override;
+	virtual void createDescriptorSetLayout() override;
+	virtual void createDescriptorSets() override;
+	virtual void createPipelineLayout() override;
+	virtual void createPipeline() override;
+};
 
 }

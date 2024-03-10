@@ -1,48 +1,28 @@
 #pragma once
 
-#include "camera.h"
-#include "pipeline.h"
-#include "device.h"
-#include "gameobject.h"
-#include "frameInfo.h"
-#include "descriptor.h"
-
-#include <memory>
-#include <vector>
+#include "renderPass.h"
 
 namespace VulkanEngine
 {
 
-	class GameObjectSystem
-	{
-	public:
-		GameObjectSystem(Device& device, DescriptorPool& descriptorPool);
-		~GameObjectSystem();
+class GameObjectPass : public RenderPass
+{
+public:
+	GameObjectPass(Device& device, DescriptorPool& descriptorPool);
+	~GameObjectPass();
 
-		GameObjectSystem(const GameObjectSystem&) = delete;
-		GameObjectSystem& operator=(const GameObjectSystem&) = delete;
+	GameObjectPass(const GameObjectPass&) = delete;
+	GameObjectPass& operator=(const GameObjectPass&) = delete;
 
-		void update(FrameInfo& frameInfo);
-		void render(const FrameInfo& frameInfo);
+	void update(FrameInfo& frameInfo);
+	void render(const FrameInfo& frameInfo);
 
-	private:
-		void createUniformBuffers();
-		void createDescriptorSetLayout();
-		void createDescriptorSets();
-		void createPipelineLayout();
-		void createPipeline();
-
-		Device& device;
-		DescriptorPool& descriptorPool;
-
-		std::vector<std::unique_ptr<Buffer>> uniformBuffers;
-
-		DescriptorSetLayout descriptorSetLayout{ device };
-
-		std::vector<VkDescriptorSet> descriptorSets;
-
-		std::unique_ptr<Pipeline> pipeline;
-		VkPipelineLayout pipelineLayout;
-	};
+private:
+	virtual void createUniformBuffers() override;
+	virtual void createDescriptorSetLayout() override;
+	virtual void createDescriptorSets() override;
+	virtual void createPipelineLayout() override;
+	virtual void createPipeline() override;
+};
 
 }

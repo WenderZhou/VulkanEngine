@@ -329,11 +329,11 @@ void Device::createDepthResources()
 	VkFormat depthFormat = findDepthFormat();
 	m_swapchainDepthFormat = depthFormat;
 
-	depthImages.resize(m_swapchainImages.size());
-	depthImageMemorys.resize(m_swapchainImages.size());
-	depthImageViews.resize(m_swapchainImages.size());
+	m_depthImages.resize(m_swapchainImages.size());
+	m_depthImageMemorys.resize(m_swapchainImages.size());
+	m_depthImageViews.resize(m_swapchainImages.size());
 
-	for(int i = 0; i < depthImages.size(); i++)
+	for(int i = 0; i < m_depthImages.size(); i++)
 	{
 		VkImageCreateInfo imageInfo{};
 		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -351,32 +351,32 @@ void Device::createDepthResources()
 		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		imageInfo.flags = 0;
 
-		if(vkCreateImage(m_device, &imageInfo, nullptr, &depthImages[i]) != VK_SUCCESS)
+		if(vkCreateImage(m_device, &imageInfo, nullptr, &m_depthImages[i]) != VK_SUCCESS)
 		{
 			throw std::runtime_error("failed to create image!");
 		}
 
 		VkMemoryRequirements memRequirements;
-		vkGetImageMemoryRequirements(m_device, depthImages[i], &memRequirements);
+		vkGetImageMemoryRequirements(m_device, m_depthImages[i], &memRequirements);
 
 		VkMemoryAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocInfo.allocationSize = memRequirements.size;
 		allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-		if(vkAllocateMemory(m_device, &allocInfo, nullptr, &depthImageMemorys[i]) != VK_SUCCESS)
+		if(vkAllocateMemory(m_device, &allocInfo, nullptr, &m_depthImageMemorys[i]) != VK_SUCCESS)
 		{
 			throw std::runtime_error("failed to allocate image memory!");
 		}
 
-		if(vkBindImageMemory(m_device, depthImages[i], depthImageMemorys[i], 0) != VK_SUCCESS)
+		if(vkBindImageMemory(m_device, m_depthImages[i], m_depthImageMemorys[i], 0) != VK_SUCCESS)
 		{
 			throw std::runtime_error("failed to bind image memory!");
 		}
 
 		VkImageViewCreateInfo viewInfo{};
 		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		viewInfo.image = depthImages[i];
+		viewInfo.image = m_depthImages[i];
 		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 		viewInfo.format = depthFormat;
 		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
@@ -385,7 +385,7 @@ void Device::createDepthResources()
 		viewInfo.subresourceRange.baseArrayLayer = 0;
 		viewInfo.subresourceRange.layerCount = 1;
 
-		if(vkCreateImageView(m_device, &viewInfo, nullptr, &depthImageViews[i]) != VK_SUCCESS)
+		if(vkCreateImageView(m_device, &viewInfo, nullptr, &m_depthImageViews[i]) != VK_SUCCESS)
 		{
 			throw std::runtime_error("failed to create depth image view!");
 		}
@@ -430,10 +430,10 @@ void Device::createRenderPass()
 
 	VkSubpassDependency dependency = {};
 	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependency.srcAccessMask = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 	dependency.dstSubpass = 0;
+	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	dependency.srcAccessMask = 0;
 	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
 	std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
@@ -457,7 +457,7 @@ void Device::createFramebuffers()
 	m_swapchainFramebuffers.resize(m_swapchainImages.size());
 	for(size_t i = 0; i < m_swapchainImages.size(); i++)
 	{
-		std::array<VkImageView, 2> attachments = { m_swapchainImageViews[i], depthImageViews[i] };
+		std::array<VkImageView, 2> attachments = { m_swapchainImageViews[i], m_depthImageViews[i] };
 
 		VkFramebufferCreateInfo createInfo = {};
 		createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -959,11 +959,11 @@ void Device::cleanupSwapchain()
 		vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
 	}
 
-	for(int i = 0; i < depthImages.size(); i++)
+	for(int i = 0; i < m_depthImages.size(); i++)
 	{
-		vkDestroyImageView(m_device, depthImageViews[i], nullptr);
-		vkDestroyImage(m_device, depthImages[i], nullptr);
-		vkFreeMemory(m_device, depthImageMemorys[i], nullptr);
+		vkDestroyImageView(m_device, m_depthImageViews[i], nullptr);
+		vkDestroyImage(m_device, m_depthImages[i], nullptr);
+		vkFreeMemory(m_device, m_depthImageMemorys[i], nullptr);
 	}
 
 	for(auto framebuffer : m_swapchainFramebuffers)

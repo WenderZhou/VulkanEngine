@@ -7,8 +7,6 @@
 namespace VulkanEngine
 {
 
-// *************** Descriptor Set Layout *********************
-
 DescriptorSetLayout::DescriptorSetLayout(Device& device) : device{ device }
 {
 
@@ -66,6 +64,7 @@ void DescriptorPool::addPoolSize(VkDescriptorType descriptorType, uint32_t count
 {
 	poolSizes.push_back({ descriptorType, count });
 }
+
 void DescriptorPool::setPoolFlags(VkDescriptorPoolCreateFlags flags)
 {
 	poolFlags = flags;

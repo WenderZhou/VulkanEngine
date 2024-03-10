@@ -25,7 +25,7 @@ struct PointLightUniformData
 	glm::mat4 view{ 1.0f };
 };
 
-PointLightPass::PointLightPass(Device& device, DescriptorPool& descriptorPool) :device{ device }, descriptorPool{ descriptorPool }
+PointLightPass::PointLightPass(Device& device, DescriptorPool& descriptorPool) : RenderPass(device, descriptorPool)
 {
 	createUniformBuffers();
 	createDescriptorSetLayout();

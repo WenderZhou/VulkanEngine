@@ -148,9 +148,9 @@ private:
 	VkRenderPass m_renderPass;
 
 	std::vector<VkImage> m_swapchainImages;
-	std::vector<VkImage> depthImages;
-	std::vector<VkDeviceMemory> depthImageMemorys;
-	std::vector<VkImageView> depthImageViews;
+	std::vector<VkImage> m_depthImages;
+	std::vector<VkDeviceMemory> m_depthImageMemorys;
+	std::vector<VkImageView> m_depthImageViews;
 	std::vector<VkImageView> m_swapchainImageViews;
 
 	VkExtent2D m_windowExtent;

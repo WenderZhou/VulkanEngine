@@ -28,7 +28,7 @@ struct GameObjectUniformData
 	int numLights;
 };
 
-GameObjectSystem::GameObjectSystem(Device& device, DescriptorPool& descriptorPool) :device{ device }, descriptorPool{ descriptorPool }
+GameObjectPass::GameObjectPass(Device& device, DescriptorPool& descriptorPool) : RenderPass(device, descriptorPool)
 {
 	createUniformBuffers();
 	createDescriptorSetLayout();
@@ -37,12 +37,12 @@ GameObjectSystem::GameObjectSystem(Device& device, DescriptorPool& descriptorPoo
 	createPipeline();
 }
 
-GameObjectSystem::~GameObjectSystem()
+GameObjectPass::~GameObjectPass()
 {
 	vkDestroyPipelineLayout(device.getDevice(), pipelineLayout, nullptr);
 }
 
-void GameObjectSystem::createUniformBuffers()
+void GameObjectPass::createUniformBuffers()
 {
 	uniformBuffers.resize(Device::MAX_FRAMES_IN_FLIGHT);
 	for(int i = 0; i < uniformBuffers.size(); i++)
@@ -52,13 +52,13 @@ void GameObjectSystem::createUniformBuffers()
 	}
 }
 
-void GameObjectSystem::createDescriptorSetLayout()
+void GameObjectPass::createDescriptorSetLayout()
 {
 	descriptorSetLayout.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS);
 	descriptorSetLayout.build();
 }
 
-void GameObjectSystem::createDescriptorSets()
+void GameObjectPass::createDescriptorSets()
 {
 	descriptorSets.resize(Device::MAX_FRAMES_IN_FLIGHT);
 	for(int i = 0; i < descriptorSets.size(); i++)
@@ -69,7 +69,7 @@ void GameObjectSystem::createDescriptorSets()
 	}
 }
 
-void GameObjectSystem::createPipelineLayout()
+void GameObjectPass::createPipelineLayout()
 {
 	VkPushConstantRange pushConstantRange{};
 	pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -91,7 +91,7 @@ void GameObjectSystem::createPipelineLayout()
 	}
 }
 
-void GameObjectSystem::createPipeline()
+void GameObjectPass::createPipeline()
 {
 	assert(pipelineLayout != nullptr && "Can not create pipeline before pipeline layout");
 
@@ -104,7 +104,7 @@ void GameObjectSystem::createPipeline()
 	pipeline = std::make_unique<Pipeline>(device, "shaders/basic.vert.spv", "shaders/basic.frag.spv", pipelineConfig);
 }
 
-void GameObjectSystem::update(FrameInfo& frameInfo)
+void GameObjectPass::update(FrameInfo& frameInfo)
 {
 	// rotate lights
 	auto rotateLight = glm::rotate(glm::mat4(1.f), 0.5f * frameInfo.frameTime, { 0.f, -1.f, 0.f });
@@ -118,7 +118,7 @@ void GameObjectSystem::update(FrameInfo& frameInfo)
 	}
 }
 
-void GameObjectSystem::render(const FrameInfo& frameInfo)
+void GameObjectPass::render(const FrameInfo& frameInfo)
 {
 	GameObjectUniformData uniformData{};
 	uniformData.projection = frameInfo.camera.getProjection();
