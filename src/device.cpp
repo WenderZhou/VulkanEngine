@@ -329,66 +329,59 @@ void Device::createDepthResources()
 	VkFormat depthFormat = findDepthFormat();
 	m_swapchainDepthFormat = depthFormat;
 
-	m_depthImages.resize(m_swapchainImages.size());
-	m_depthImageMemorys.resize(m_swapchainImages.size());
-	m_depthImageViews.resize(m_swapchainImages.size());
+	VkImageCreateInfo imageInfo{};
+	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	imageInfo.imageType = VK_IMAGE_TYPE_2D;
+	imageInfo.extent.width = m_swapchainExtent.width;
+	imageInfo.extent.height = m_swapchainExtent.height;
+	imageInfo.extent.depth = 1;
+	imageInfo.mipLevels = 1;
+	imageInfo.arrayLayers = 1;
+	imageInfo.format = depthFormat;
+	imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+	imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+	imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	imageInfo.flags = 0;
 
-	for(int i = 0; i < m_depthImages.size(); i++)
+	if(vkCreateImage(m_device, &imageInfo, nullptr, &m_depthImage) != VK_SUCCESS)
 	{
-		VkImageCreateInfo imageInfo{};
-		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		imageInfo.imageType = VK_IMAGE_TYPE_2D;
-		imageInfo.extent.width = m_swapchainExtent.width;
-		imageInfo.extent.height = m_swapchainExtent.height;
-		imageInfo.extent.depth = 1;
-		imageInfo.mipLevels = 1;
-		imageInfo.arrayLayers = 1;
-		imageInfo.format = depthFormat;
-		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		imageInfo.flags = 0;
+		throw std::runtime_error("failed to create image!");
+	}
 
-		if(vkCreateImage(m_device, &imageInfo, nullptr, &m_depthImages[i]) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to create image!");
-		}
+	VkMemoryRequirements memRequirements;
+	vkGetImageMemoryRequirements(m_device, m_depthImage, &memRequirements);
 
-		VkMemoryRequirements memRequirements;
-		vkGetImageMemoryRequirements(m_device, m_depthImages[i], &memRequirements);
+	VkMemoryAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize = memRequirements.size;
+	allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-		VkMemoryAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	if(vkAllocateMemory(m_device, &allocInfo, nullptr, &m_depthImageMemory) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to allocate image memory!");
+	}
 
-		if(vkAllocateMemory(m_device, &allocInfo, nullptr, &m_depthImageMemorys[i]) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to allocate image memory!");
-		}
+	if(vkBindImageMemory(m_device, m_depthImage, m_depthImageMemory, 0) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to bind image memory!");
+	}
 
-		if(vkBindImageMemory(m_device, m_depthImages[i], m_depthImageMemorys[i], 0) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to bind image memory!");
-		}
+	VkImageViewCreateInfo viewInfo{};
+	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	viewInfo.image = m_depthImage;
+	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	viewInfo.format = depthFormat;
+	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+	viewInfo.subresourceRange.baseMipLevel = 0;
+	viewInfo.subresourceRange.levelCount = 1;
+	viewInfo.subresourceRange.baseArrayLayer = 0;
+	viewInfo.subresourceRange.layerCount = 1;
 
-		VkImageViewCreateInfo viewInfo{};
-		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		viewInfo.image = m_depthImages[i];
-		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		viewInfo.format = depthFormat;
-		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-		viewInfo.subresourceRange.baseMipLevel = 0;
-		viewInfo.subresourceRange.levelCount = 1;
-		viewInfo.subresourceRange.baseArrayLayer = 0;
-		viewInfo.subresourceRange.layerCount = 1;
-
-		if(vkCreateImageView(m_device, &viewInfo, nullptr, &m_depthImageViews[i]) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to create depth image view!");
-		}
+	if(vkCreateImageView(m_device, &viewInfo, nullptr, &m_depthImageView) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create depth image view!");
 	}
 }
 
@@ -457,7 +450,7 @@ void Device::createFramebuffers()
 	m_swapchainFramebuffers.resize(m_swapchainImages.size());
 	for(size_t i = 0; i < m_swapchainImages.size(); i++)
 	{
-		std::array<VkImageView, 2> attachments = { m_swapchainImageViews[i], m_depthImageViews[i] };
+		std::array<VkImageView, 2> attachments = { m_swapchainImageViews[i], m_depthImageView };
 
 		VkFramebufferCreateInfo createInfo = {};
 		createInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -959,12 +952,9 @@ void Device::cleanupSwapchain()
 		vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
 	}
 
-	for(int i = 0; i < m_depthImages.size(); i++)
-	{
-		vkDestroyImageView(m_device, m_depthImageViews[i], nullptr);
-		vkDestroyImage(m_device, m_depthImages[i], nullptr);
-		vkFreeMemory(m_device, m_depthImageMemorys[i], nullptr);
-	}
+	vkDestroyImageView(m_device, m_depthImageView, nullptr);
+	vkDestroyImage(m_device, m_depthImage, nullptr);
+	vkFreeMemory(m_device, m_depthImageMemory, nullptr);
 
 	for(auto framebuffer : m_swapchainFramebuffers)
 	{
@@ -1036,8 +1026,8 @@ void Device::beginRenderPass(VkCommandBuffer commandBuffer)
 
 	VkRenderPassBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	beginInfo.renderPass = getRenderPass();
-	beginInfo.framebuffer = getFrameBuffer(currentImageIndex);
+	beginInfo.renderPass = m_renderPass;
+	beginInfo.framebuffer = m_swapchainFramebuffers[currentImageIndex];
 	beginInfo.renderArea.offset = { 0,0 };
 	beginInfo.renderArea.extent = m_swapchainExtent;
 	beginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());

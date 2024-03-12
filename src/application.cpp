@@ -62,22 +62,24 @@ void App::run()
 		float aspectRatio = device.getAspectRatio();
 		camera.setPerspectiveProjection(glm::radians(50.0f), aspectRatio, 0.1f, 100.f);
 
-		VkCommandBuffer commandBuffer = device.beginFrame();
-		int frameIndex = device.getFrameIndex();
+		if(VkCommandBuffer commandBuffer = device.beginFrame())
+		{
+			int frameIndex = device.getFrameIndex();
 
-		FrameInfo frameInfo{ frameIndex, frameTime, commandBuffer, camera, gameObjects };
+			FrameInfo frameInfo{ frameIndex, frameTime, commandBuffer, camera, gameObjects };
 
-		gameObjectPass.update(frameInfo);
+			gameObjectPass.update(frameInfo);
 
-		device.beginRenderPass(commandBuffer);
+			device.beginRenderPass(commandBuffer);
 
-		gameObjectPass.render(frameInfo);
-		pointLightPass.render(frameInfo);
+			gameObjectPass.render(frameInfo);
+			pointLightPass.render(frameInfo);
 
-		ui.render(frameInfo);
+			ui.render(frameInfo);
 
-		device.endRenderPass(commandBuffer);
-		device.endFrame();
+			device.endRenderPass(commandBuffer);
+			device.endFrame();
+		}
 	}
 
 	device.waitIdle();

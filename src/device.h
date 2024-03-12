@@ -55,6 +55,8 @@ public:
 
 	VkCommandPool getCommandPool() { return m_commandPool; }
 
+	VkRenderPass getRenderPass() { return m_renderPass; }
+
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	QueueFamilyIndices getQueueFamilyIndices() { return getQueueFamilyIndices(m_physicalDevice); }
 	VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
@@ -68,8 +70,6 @@ public:
 
 	void waitIdle();
 
-	VkFramebuffer getFrameBuffer(int index) { return m_swapchainFramebuffers[index]; }
-	VkRenderPass getRenderPass() { return m_renderPass; }
 	VkImageView getImageView(int index) { return m_swapchainImageViews[index]; }
 
 	float getAspectRatio() { return static_cast<float>(m_swapchainExtent.width) / static_cast<float>(m_swapchainExtent.height); }
@@ -77,13 +77,11 @@ public:
 
 	VkResult submitCommandBuffers(const VkCommandBuffer* buffers, uint32_t* imageIndex);
 
-	int getFrameIndex() const
-	{
-		return currentFrameIndex;
-	}
+	int getFrameIndex() const{return currentFrameIndex;}
 
 	VkCommandBuffer beginFrame();
 	void endFrame();
+
 	void beginRenderPass(VkCommandBuffer commandBuffer);
 	void endRenderPass(VkCommandBuffer commandBuffer);
 
@@ -148,10 +146,11 @@ private:
 	VkRenderPass m_renderPass;
 
 	std::vector<VkImage> m_swapchainImages;
-	std::vector<VkImage> m_depthImages;
-	std::vector<VkDeviceMemory> m_depthImageMemorys;
-	std::vector<VkImageView> m_depthImageViews;
 	std::vector<VkImageView> m_swapchainImageViews;
+
+	VkImage m_depthImage;
+	VkDeviceMemory m_depthImageMemory;
+	VkImageView m_depthImageView;
 
 	VkExtent2D m_windowExtent;
 

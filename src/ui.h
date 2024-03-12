@@ -18,6 +18,8 @@ public:
 	UI(Window& window, Device& device, DescriptorPool& descriptorPool);
 	~UI();
 	void render(FrameInfo& frameInfo);
+private:
+	void setStyle();
 };
 
 }

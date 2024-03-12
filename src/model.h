@@ -26,9 +26,9 @@ public:
 		static std::vector<VkVertexInputBindingDescription> getBindingDescriptions();
 		static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
 
-		bool operator == (const Vertex& other) const
+		bool operator == (const Vertex& vertex) const
 		{
-			return position == other.position && color == other.color && normal == other.normal && texcoord == other.texcoord;
+			return position == vertex.position && color == vertex.color && normal == vertex.normal && texcoord == vertex.texcoord;
 		}
 	};
 
@@ -55,13 +55,13 @@ private:
 	void createVertexBuffers(const std::vector<Vertex>& vertices);
 	void createIndexBuffers(const std::vector<uint32_t>& indices);
 
-	Device& device;
+	Device& m_device;
 
-	std::unique_ptr<Buffer> vertexBuffer;
-	uint32_t vertexCount;
+	std::unique_ptr<Buffer> m_vertexBuffer;
+	uint32_t m_vertexCount;
 
-	bool hasIndexBuffer = false;
-	std::unique_ptr<Buffer> indexBuffer;
-	uint32_t indexCount;
+	bool m_hasIndexBuffer = false;
+	std::unique_ptr<Buffer> m_indexBuffer;
+	uint32_t m_indexCount;
 };
 }
