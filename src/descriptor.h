@@ -36,7 +36,11 @@ private:
 struct DescriptorDesc
 {
 	uint32_t binding;
-	VkDescriptorBufferInfo* bufferInfo;
+	union
+	{
+		VkDescriptorBufferInfo* pBufferInfo;
+		VkDescriptorImageInfo* pImageInfo;
+	};
 };
 
 class DescriptorPool {
@@ -60,8 +64,8 @@ public:
 	VkDescriptorPool getDescriptorPool();
 
 private:
-	Device& device;
-	VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
+	Device& m_device;
+	VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
 
 	std::vector<VkDescriptorPoolSize> poolSizes{};
 	uint32_t maxSets = 1000;

@@ -151,7 +151,7 @@ VkResult Buffer::invalidate(VkDeviceSize size, VkDeviceSize offset)
  *
  * @return VkDescriptorBufferInfo of specified offset and range
  */
-VkDescriptorBufferInfo Buffer::descriptorInfo(VkDeviceSize size, VkDeviceSize offset)
+VkDescriptorBufferInfo Buffer::getBufferInfo(VkDeviceSize size, VkDeviceSize offset)
 {
 	return VkDescriptorBufferInfo{ m_buffer, offset, size, };
 }
@@ -185,7 +185,7 @@ VkResult Buffer::flushIndex(int index) { return flush(alignmentSize, index * ali
  */
 VkDescriptorBufferInfo Buffer::descriptorInfoForIndex(int index)
 {
-	return descriptorInfo(alignmentSize, index * alignmentSize);
+	return getBufferInfo(alignmentSize, index * alignmentSize);
 }
 
 /**

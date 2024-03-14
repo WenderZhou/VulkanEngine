@@ -60,8 +60,9 @@ void PointLightPass::createDescriptorSets()
 	descriptorSets.resize(Device::MAX_FRAMES_IN_FLIGHT);
 	for(int i = 0; i < descriptorSets.size(); i++)
 	{
-		auto bufferInfo = uniformBuffers[i]->descriptorInfo();
-		std::vector<DescriptorDesc> descriptorDescs = { {0, &bufferInfo} };
+		std::vector<DescriptorDesc> descriptorDescs(1);
+		descriptorDescs[0].binding = 0;
+		descriptorDescs[0].pBufferInfo = &uniformBuffers[i]->getBufferInfo();
 		descriptorPool.allocateDescriptorSet(descriptorSetLayout, descriptorDescs, descriptorSets[i]);
 	}
 }

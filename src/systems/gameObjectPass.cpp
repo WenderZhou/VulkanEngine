@@ -55,6 +55,7 @@ void GameObjectPass::createUniformBuffers()
 void GameObjectPass::createDescriptorSetLayout()
 {
 	descriptorSetLayout.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS);
+	descriptorSetLayout.addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
 	descriptorSetLayout.build();
 }
 
@@ -63,8 +64,11 @@ void GameObjectPass::createDescriptorSets()
 	descriptorSets.resize(Device::MAX_FRAMES_IN_FLIGHT);
 	for(int i = 0; i < descriptorSets.size(); i++)
 	{
-		auto bufferInfo = uniformBuffers[i]->descriptorInfo();
-		std::vector<DescriptorDesc> descriptorDescs = { {0, &bufferInfo} };
+		std::vector<DescriptorDesc> descriptorDescs(2);
+		descriptorDescs[0].binding = 0;
+		descriptorDescs[0].pBufferInfo = &uniformBuffers[i]->getBufferInfo();
+		descriptorDescs[1].binding = 1;
+		descriptorDescs[1].pImageInfo = &image.getImageInfo();
 		descriptorPool.allocateDescriptorSet(descriptorSetLayout, descriptorDescs, descriptorSets[i]);
 	}
 }

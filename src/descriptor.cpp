@@ -84,20 +84,20 @@ void DescriptorPool::build()
 	descriptorPoolInfo.maxSets = maxSets;
 	descriptorPoolInfo.flags = poolFlags;
 
-	if(vkCreateDescriptorPool(device.getDevice(), &descriptorPoolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
+	if(vkCreateDescriptorPool(m_device.getDevice(), &descriptorPoolInfo, nullptr, &m_descriptorPool) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to create descriptor pool!");
 	}
 }
 
-DescriptorPool::DescriptorPool(Device& device) : device{ device }
+DescriptorPool::DescriptorPool(Device& device) : m_device{ device }
 {
 
 }
 
 DescriptorPool::~DescriptorPool()
 {
-	vkDestroyDescriptorPool(device.getDevice(), descriptorPool, nullptr);
+	vkDestroyDescriptorPool(m_device.getDevice(), m_descriptorPool, nullptr);
 }
 
 void DescriptorPool::allocateDescriptorSet(const DescriptorSetLayout& descriptorSetLayout, std::vector<DescriptorDesc>& descriptorDescs, VkDescriptorSet& descriptorSet)
@@ -108,11 +108,11 @@ void DescriptorPool::allocateDescriptorSet(const DescriptorSetLayout& descriptor
 
 	VkDescriptorSetAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = descriptorPool;
+	allocInfo.descriptorPool = m_descriptorPool;
 	allocInfo.pSetLayouts = &setLayout;
 	allocInfo.descriptorSetCount = 1;
 
-	if(vkAllocateDescriptorSets(device.getDevice(), &allocInfo, &descriptorSet) != VK_SUCCESS)
+	if(vkAllocateDescriptorSets(m_device.getDevice(), &allocInfo, &descriptorSet) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to allocate descriptor set");
 	}
@@ -123,29 +123,30 @@ void DescriptorPool::allocateDescriptorSet(const DescriptorSetLayout& descriptor
 		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		write.descriptorType = descriptorSetLayout.getDescriptorType(desc.binding);
 		write.dstBinding = desc.binding;
-		write.pBufferInfo = desc.bufferInfo;
+		write.pImageInfo = desc.pImageInfo;
+		write.pBufferInfo = desc.pBufferInfo;
 		write.descriptorCount = 1;
 		write.dstSet = descriptorSet;
 
 		writes.push_back(write);
 	}
 
-	vkUpdateDescriptorSets(device.getDevice(), writes.size(), writes.data(), 0, nullptr);
+	vkUpdateDescriptorSets(m_device.getDevice(), writes.size(), writes.data(), 0, nullptr);
 }
 
 void DescriptorPool::freeDescriptors(std::vector<VkDescriptorSet>& descriptors) const
 {
-	vkFreeDescriptorSets(device.getDevice(), descriptorPool, static_cast<uint32_t>(descriptors.size()), descriptors.data());
+	vkFreeDescriptorSets(m_device.getDevice(), m_descriptorPool, static_cast<uint32_t>(descriptors.size()), descriptors.data());
 }
 
 void DescriptorPool::resetPool()
 {
-	vkResetDescriptorPool(device.getDevice(), descriptorPool, 0);
+	vkResetDescriptorPool(m_device.getDevice(), m_descriptorPool, 0);
 }
 
 VkDescriptorPool DescriptorPool::getDescriptorPool()
 {
-	return descriptorPool;
+	return m_descriptorPool;
 }
 
 }

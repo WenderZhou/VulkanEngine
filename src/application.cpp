@@ -6,6 +6,8 @@
 #include "systems/gameObjectPass.h"
 #include "systems/pointLightPass.h"
 
+#include "image.h"
+
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
@@ -20,7 +22,7 @@ namespace VulkanEngine
 
 App::App()
 {
-	globalPool.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, Device::MAX_FRAMES_IN_FLIGHT);
+	globalPool.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2 * Device::MAX_FRAMES_IN_FLIGHT);
 	globalPool.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, Device::MAX_FRAMES_IN_FLIGHT);
 	globalPool.setPoolFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
 	globalPool.build();

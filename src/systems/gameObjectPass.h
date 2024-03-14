@@ -1,6 +1,7 @@
 #pragma once
 
 #include "renderPass.h"
+#include "image.h"
 
 namespace VulkanEngine
 {
@@ -23,6 +24,8 @@ private:
 	virtual void createDescriptorSets() override;
 	virtual void createPipelineLayout() override;
 	virtual void createPipeline() override;
+
+	Image image{ device, "textures/texture.jpg" };
 };
 
 }

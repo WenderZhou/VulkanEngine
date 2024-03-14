@@ -157,9 +157,6 @@ bool Device::isSuitablePhysicalDevice(VkPhysicalDevice physicalDevice)
 	if(details.formats.empty() || details.presentModes.empty())
 		return false;
 
-	VkPhysicalDeviceProperties properties;
-	vkGetPhysicalDeviceProperties(physicalDevice, &properties);
-
 	VkPhysicalDeviceFeatures features;
 	vkGetPhysicalDeviceFeatures(physicalDevice, &features);
 	if(!features.samplerAnisotropy)
@@ -516,13 +513,13 @@ VkSurfaceFormatKHR Device::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFo
 
 VkPresentModeKHR Device::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
 {
-	for(const auto& availablePresentMode : availablePresentModes)
+	/*for(const auto& availablePresentMode : availablePresentModes)
 	{
 		if(availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
 		{
 			return availablePresentMode;
 		}
-	}
+	}*/
 
 	return VK_PRESENT_MODE_FIFO_KHR;
 }
@@ -870,8 +867,8 @@ void Device::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize siz
 	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
 	VkBufferCopy copyRegion{};
-	copyRegion.srcOffset = 0;  // Optional
-	copyRegion.dstOffset = 0;  // Optional
+	copyRegion.srcOffset = 0;
+	copyRegion.dstOffset = 0;
 	copyRegion.size = size;
 	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
 
